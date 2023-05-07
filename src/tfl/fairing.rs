@@ -1,0 +1,34 @@
+use std::sync::Arc;
+
+use rocket::{Rocket, Orbit};
+use rocket::fairing::{Fairing, Info, Kind};
+use rocket::tokio::spawn;
+
+pub struct TflFairing {
+    tfl: Arc<crate::tfl::Tfl>,
+}
+
+impl TflFairing {
+    pub fn new(tfl: Arc<crate::tfl::Tfl>) -> Self {
+        TflFairing {
+            tfl,
+        }
+    }
+}
+
+#[rocket::async_trait]
+impl Fairing for TflFairing {
+    fn info(&self) -> Info {
+        Info {
+            name: "TFL Background Task",
+            kind: Kind::Liftoff
+        }
+    }
+
+    async fn on_liftoff(&self, _rocket: &Rocket<Orbit>) {
+        let tfl = self.tfl.clone();
+        spawn(async move {
+            tfl.as_ref().start_polling().await;
+        });
+    }
+}
