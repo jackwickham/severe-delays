@@ -1,4 +1,3 @@
-
 export enum State {
   GOOD_SERVICE = "Good service",
   MINOR_DELAYS = "Minor delays",

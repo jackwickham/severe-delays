@@ -1,1 +1,1 @@
-export { LineHistory } from "./LineHistory";
+export {LineHistory} from "./LineHistory";
