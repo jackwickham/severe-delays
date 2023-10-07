@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use log::{info, warn};
 use rocket::tokio;
+use serde_json::Value;
 
 use crate::{types::LineStatus, store::{AbstractStore, Store}};
 use super::api::Api;
@@ -30,7 +31,7 @@ impl Tfl {
         }
     }
 
-    fn update_status(&self, store: &Store, status: HashMap<String, LineStatus>) {
+    fn update_status(&self, store: &Store, status: HashMap<String, Value>) {
         store.set_status(status);
         info!("Updated status");
     }

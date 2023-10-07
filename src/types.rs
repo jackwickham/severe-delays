@@ -6,15 +6,14 @@ pub struct LineStatus {
     pub reason: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Status {
+    UnknownInt(i32),
     GoodService,
     MinorDelays,
     SevereDelays,
     PartClosure,
-    ServiceClosed,
-    Suspended,
-    PlannedClosure,
+    Closed,
     PartSuspended,
-    UnknownInt(i32),
+    Suspended,
 }

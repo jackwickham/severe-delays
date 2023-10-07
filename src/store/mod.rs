@@ -3,28 +3,25 @@ mod memory;
 use std::collections::HashMap;
 
 use serde::Serialize;
+use serde_json::Value;
 use time::OffsetDateTime;
 
-use crate::types::LineStatus;
 use self::memory::MemoryStore;
 
 pub type Store = MemoryStore;
-pub type State = HashMap<String, LineStatus>;
+
+#[derive(Debug, Clone, Serialize)]
+pub struct LineHistoryEntry {
+    pub start_time: OffsetDateTime,
+    pub end_time: Option<OffsetDateTime>,
+    pub data: Value,
+}
 
 pub trait AbstractStore {
-    type HistoryIterator<'a>: Iterator<Item = HistoryEntry> where Self : 'a;
-
-    fn get_current_status(&self) -> State;
-    fn get_status_history<'a>(&'a self) -> Self::HistoryIterator<'a>;
-    fn set_status(&self, status: State);
+    fn get_status_history<'a>(&'a self, start_time: OffsetDateTime, end_time: OffsetDateTime) -> HashMap<String, Vec<LineHistoryEntry>>;
+    fn set_status(&self, status_by_line: HashMap<String, Value>);
 }
 
 pub fn create_store() -> Store {
     MemoryStore::new()
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct HistoryEntry {
-    pub start_time: OffsetDateTime,
-    pub status: State,
 }

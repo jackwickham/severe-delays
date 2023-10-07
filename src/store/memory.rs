@@ -1,69 +1,55 @@
 use std::{sync::RwLock, collections::HashMap};
 
+use serde_json::Value;
 use time::OffsetDateTime;
 
-use super::{HistoryEntry, AbstractStore, State};
+use super::{AbstractStore, LineHistoryEntry};
 
 pub struct MemoryStore {
-    history: RwLock<Vec<HistoryEntry>>,
+    history: RwLock<HashMap<String, Vec<LineHistoryEntry>>>,
 }
 
 impl MemoryStore {
     pub fn new() -> Self {
         MemoryStore {
-            history: RwLock::new(Vec::new()),
+            history: RwLock::new(HashMap::new()),
         }
     }
 }
 
 impl AbstractStore for MemoryStore {
-    type HistoryIterator<'a> = MemoryHistoryIterator<'a>;
-
-    fn get_current_status(&self) -> State {
-        self.history.read().unwrap().last().map(|entry| entry.status.clone()).unwrap_or(HashMap::new())
+    fn get_status_history<'a>(&'a self, start_time: OffsetDateTime, end_time: OffsetDateTime) -> HashMap<String, Vec<LineHistoryEntry>> {
+        let history = self.history.read().unwrap();
+        history.iter()
+            .map(|(line, history)| {
+                let history = history.iter()
+                    .filter(|entry| entry.end_time.map_or(true, |t| t >= start_time) && entry.start_time <= end_time)
+                     .map(|entry| (*entry).clone())
+                    .collect::<Vec<_>>();
+                (line.clone(), history)
+            })
+            .collect::<HashMap<_, _>>()
     }
 
-    fn get_status_history<'a>(&'a self) -> Self::HistoryIterator<'a> {
-        MemoryHistoryIterator::new(self)
-    }
-
-    fn set_status(&self, status: State) {
+    fn set_status(&self, status_by_line: HashMap<String, Value>) {
+        let now = OffsetDateTime::now_utc();
         let mut history = self.history.write().unwrap();
-        if history.len() == 0 || history.last().unwrap().status != status {
-            info!("Status has changed!");
-            history.push(HistoryEntry {
-                start_time: OffsetDateTime::now_utc(),
-                status,
+        for (line, new_data) in status_by_line {
+            let history = history.entry(line).or_insert_with(Vec::new);
+            let last_entry = history.last_mut();
+            if let Some(last_entry) = last_entry {
+                if last_entry.data == new_data {
+                    continue;
+                }
+                if last_entry.end_time.is_none() {
+                    last_entry.end_time = Some(now);
+                }
+            }
+            history.push(LineHistoryEntry {
+                start_time: now,
+                end_time: None,
+                data: new_data,
             });
-        }
-    }
-}
-
-pub struct MemoryHistoryIterator<'a> {
-    store: &'a MemoryStore,
-    index: usize,
-}
-
-impl<'a> MemoryHistoryIterator<'a> {
-    pub fn new(store: &'a MemoryStore) -> Self {
-        MemoryHistoryIterator {
-            store,
-            index: store.history.read().unwrap().len(),
-        }
-    }
-}
-
-impl<'a> Iterator for MemoryHistoryIterator<'a> {
-    type Item = HistoryEntry;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let history = self.store.history.read().unwrap();
-        if self.index > 0 {
-            self.index -= 1;
-            let item = history[self.index].clone();
-            Some(item)
-        } else {
-            None
         }
     }
 }

@@ -1,130 +1,108 @@
-import {For, type Component} from "solid-js";
-import {Line} from "./Line";
-import {State} from "./types";
+import {For, type Component, createResource} from "solid-js";
+import {HistoryEntry, Line} from "./Line";
+import {LineStatus, State} from "./types";
+import {loadStatuses} from "../api/api";
+import { Status } from "../api/types";
 
 export const LineHistory: Component = () => {
-  const statusHistory = [
-    {
-      startTime: new Date("2023-09-02T00:00:00Z"),
-      status: {
-        state: State.GOOD_SERVICE,
-        reason: null,
-      },
-    },
-    {
-      startTime: new Date("2023-09-02T08:00:00Z"),
-      status: {
-        state: State.MINOR_DELAYS,
-        reason: "Signal failure",
-      },
-    },
-    {
-      startTime: new Date("2023-09-02T12:00:00Z"),
-      status: {
-        state: State.SEVERE_DELAYS,
-        reason: "Faulty train",
-      },
-    },
-    {
-      startTime: new Date("2023-09-02T16:00:00Z"),
-      status: {
-        state: State.PART_SUSPENDED,
-        reason: "Signal failure",
-      },
-    },
-    {
-      startTime: new Date("2023-09-02T20:00:00Z"),
-      status: {
-        state: State.SUSPENDED,
-        reason: "Customer incident",
-      },
-    },
-    {
-      startTime: new Date("2023-09-03T00:00:00Z"),
-      status: {
-        state: State.PART_CLOSED,
-        reason:
-          "METROPOLITAN LINE: Saturday 7 and Sunday 8 October, no service between Wembley Park and Amersham / Chesham / Uxbridge / Watford. Chiltern Railways services will not run between Marylebone and Amersham. Replacement buses operate, but will not serve Preston Road, Northwick Park or stations between Harrow-on-the-Hill and Uxbridge. Please use local London Buses services.",
-      },
-    },
-    {
-      startTime: new Date("2023-09-03T04:00:00Z"),
-      status: {
-        state: State.CLOSED,
-        reason: "Engineering works",
-      },
-    },
-    {
-      startTime: new Date("2023-09-03T14:00:00Z"),
-      status: {
-        state: State.GOOD_SERVICE,
-        reason: null,
-      },
-    },
-  ];
   const displayRange = {
-    start: new Date("2023-09-01T22:00:00Z"),
-    end: new Date("2023-09-04T00:00:00Z"),
+    start: new Date("2023-10-07T23:00:00Z"),
+    end: new Date(),
   };
   // Colours from https://content.tfl.gov.uk/tfl-colour-standard-issue-08.pdf
-  const lines = [
-    {
-      name: "Jubilee line",
-      statusHistory: statusHistory,
-      colour: {
-        r: 123,
-        g: 134,
-        b: 140,
-      },
+  const lineColors: { [line: string]: {r: number, g: number, b: number} } = {
+    bakerloo: { r: 166, g: 90, b: 42},
+    central: { r: 255, g: 37, b: 27 },
+    circle: { r: 255, g: 205, b: 0},
+    district: { r: 0, g: 121, b: 52 },
+    "hammersmith-city": { r: 246, g: 155, b: 173 },
+    jubilee: { r: 123, g: 134, b: 140 },
+    metropolitan: {
+      r: 135,
+      g: 15,
+      b: 84,
     },
-    {
-      name: "Metropolitan line",
-      statusHistory: statusHistory,
-      colour: {
-        r: 135,
-        g: 15,
-        b: 84,
-      },
+    northern: {
+      r: 0,
+      g: 0,
+      b: 0,
     },
-    {
-      name: "Northern line",
-      statusHistory: statusHistory,
-      colour: {
-        r: 0,
-        g: 0,
-        b: 0,
-      },
+    picadilly: {
+      r: 0, g: 15, b: 159
     },
-    {
-      name: "Elizabeth line",
-      statusHistory: [
-        {
-          startTime: new Date("2023-01-01T00:00:00Z"),
+    victoria: {
+      r: 0, g: 160, b: 223
+    },
+    "waterloo-city": {
+      r: 107, g: 205, b: 178,
+    },
+    elizabeth: {
+      r: 119,
+      g: 61,
+      b: 189,
+    },
+    "london-overground": {
+      r: 238, g: 118, b: 35
+    },
+    dlr: {
+      r: 0, g: 175, b: 170,
+    },
+  };
+  const [apiResponse] = createResource(async () => await loadStatuses());
+  const lines = () => {
+    const resp = apiResponse();
+    if (!resp) {
+      return [];
+    }
+    const result: {statusHistory: HistoryEntry[], color?: {r: number, g: number, b: number}, name: string}[] = [];
+    for (const [lineId, historyEntries] of Object.entries(resp)) {
+      result.push({
+        statusHistory: historyEntries.map((entry) => ({
+          startTime: new Date(entry.from),
           status: {
-            state: State.SEVERE_DELAYS,
-            reason: "¯\\_(ツ)_/¯",
+            state: mapState(entry.status),
+            reason: entry.reason || null,
           },
-        },
-      ],
-      colour: {
-        r: 119,
-        g: 61,
-        b: 189,
-      },
-    },
-  ];
+        })),
+        color: lineColors[lineId],
+        name: lineId,
+      });
+    }
+    return result;
+  };
   return (
     <div class="space-y-10">
-      <For each={lines}>
+      <For each={lines()}>
         {(line) => (
           <Line
             name={line.name}
             statusHistory={line.statusHistory}
-            colour={line.colour}
+            color={line.color}
             displayRange={displayRange}
           />
         )}
       </For>
     </div>
   );
+};
+
+const mapState = (state: Status): State => {
+  switch (state) {
+    case "GoodService":
+      return State.GOOD_SERVICE;
+    case "MinorDelays":
+      return State.MINOR_DELAYS;
+    case "SevereDelays":
+      return State.SEVERE_DELAYS;
+    case "PartClosure":
+      return State.PART_CLOSED;
+    case "Closed":
+      return State.CLOSED;
+    case "PartSuspended":
+      return State.PART_SUSPENDED;
+    case "Suspended":
+      return State.SUSPENDED;
+    default:
+      return State.OTHER;
+  }
 };

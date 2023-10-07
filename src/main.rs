@@ -1,42 +1,82 @@
 mod store;
 mod tfl;
 mod types;
+mod cors;
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
-use store::{Store, AbstractStore, HistoryEntry};
+use cors::CorsFairing;
+use serde::Serialize;
+use store::{Store, AbstractStore};
 use tfl::{Tfl, TflFairing};
 use rocket::State;
 use rocket::serde::json::Json;
-use time::macros::format_description;
+use time::{OffsetDateTime, format_description};
 
 #[macro_use] extern crate rocket;
 
+#[derive(Debug, Clone, Serialize)]
+struct ApiLineStatusEntry {
+    status: types::Status,
+    reason: Option<String>,
+    from: SerializableDateTime,
+    to: Option<SerializableDateTime>,
+}
+
+#[derive(Debug, Clone)]
+struct SerializableDateTime(OffsetDateTime);
+
+impl Serialize for SerializableDateTime {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+        {
+            serializer.serialize_str(&self.0.format(&format_description::well_known::Rfc3339).unwrap())
+        }
+}
+
+impl From<OffsetDateTime> for SerializableDateTime {
+    fn from(dt: OffsetDateTime) -> Self {
+        SerializableDateTime(dt)
+    }
+}
+
 #[get("/<_..>")]
 async fn index(store: &State<Arc<Store>>) -> String {
-    let status_history = store.get_status_history();
+    let status_history = store.get_status_history(OffsetDateTime::now_utc() - time::Duration::days(1), OffsetDateTime::now_utc());
     status_history.into_iter()
-        .map(|entry| format_state(entry))
+        .map(|(line_id, history)| line_id)
         .collect::<Vec<String>>()
         .join("\n\n")
 }
 
-fn format_state(entry: HistoryEntry) -> String {
-    let mut formatted_statuses = entry.status.into_iter()
-        .map(|(line, status)| (
-            line,
-            format!("{:?}{}", status.status, status.reason.map(|reason| format!(" ({})", reason.trim())).unwrap_or(String::new()))))
-        .map(|(line, statuses)| format!("{}: {}", line, statuses))
-        .collect::<Vec<_>>();
-    formatted_statuses.sort_unstable();
-
-    format!("{}\n{}", entry.start_time.format(format_description!("[year]-[month]-[day] [hour]:[minute]:[second]")).unwrap(), formatted_statuses.join("\n"))
+#[get("/api")]
+async fn api(store: &State<Arc<Store>>) -> Json<HashMap<String, Vec<ApiLineStatusEntry>>> {
+    let status_history = store.get_status_history(OffsetDateTime::now_utc() - time::Duration::days(1), OffsetDateTime::now_utc());
+    let response = status_history.into_iter()
+        .map(|(line, entries)| {
+            let entries = entries.into_iter()
+                .filter_map(|entry| {
+                    let parsed_entry = tfl::try_parse(&line, &entry.data)?;
+                    Some(ApiLineStatusEntry {
+                        status: parsed_entry.status,
+                        reason: parsed_entry.reason,
+                        from: entry.start_time.into(),
+                        to: entry.end_time.map(SerializableDateTime::from),
+                    })
+                })
+                .collect::<Vec<_>>();
+            (line, entries)
+        })
+        .collect::<HashMap<_, _>>();
+    Json(response)
 }
 
-#[get("/api")]
-async fn api(store: &State<Arc<Store>>) -> Json<Vec<HistoryEntry>> {
-    let status_history = store.get_status_history().collect::<Vec<_>>();
-    Json(status_history)
+/// Handle OPTION requests to send CORS headers
+#[options("/<_..>")]
+fn all_options() {
+    // Intentionally empty
 }
 
 #[launch]
@@ -46,6 +86,7 @@ fn rocket() -> _ {
     rocket::build()
         .manage(store)
         .manage(tfl.clone())
+        .attach(CorsFairing)
         .attach(TflFairing::new(tfl))
         .mount("/", routes![index, api])
 }

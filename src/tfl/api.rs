@@ -3,31 +3,12 @@ use std::collections::HashMap;
 
 use reqwest::RequestBuilder;
 use serde::Deserialize;
+use serde_json::Value;
 use time::OffsetDateTime;
 
 use crate::types::{LineStatus, Status};
 
-const STATUS_API_URI: &'static str = "https://api.tfl.gov.uk/Line/Mode/tube/Status";
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct TflStatus {
-    pub id: String,
-    pub name: String,
-    #[serde(rename = "lineStatuses")]
-    pub line_statuses: Vec<TflLineStatus>,
-}
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct TflLineStatus {
-    pub id: i32,
-    #[serde(rename = "statusSeverity")]
-    pub status_severity: i32,
-    #[serde(rename = "statusSeverityDescription")]
-    pub status_severity_description: String,
-    pub reason: Option<String>,
-    #[serde(deserialize_with = "lenient_deserialize_optional_datetime")]
-    pub created: Option<OffsetDateTime>,
-}
+const STATUS_API_URI: &'static str = "https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground,elizabeth-line/Status";
 
 pub struct Api {
     client: reqwest::Client,
@@ -42,11 +23,17 @@ impl Api {
         }
     }
 
-    pub async fn load_status(&self) -> Result<HashMap<String, LineStatus>, ApiError> {
+    pub async fn load_status(&self) -> Result<HashMap<String, Value>, ApiError> {
         let resp = self.add_api_key(self.client.get(STATUS_API_URI)).send().await?;
-        let tfl_status = resp.json::<Vec<TflStatus>>().await?;
+        let tfl_status = resp.json::<Vec<Value>>().await?;
         let status = tfl_status.into_iter()
-            .map(|status| (
+            .filter_map(|value| Some((value.get("id")?.as_str()?.to_string(), value)))
+            .collect::<HashMap<String, Value>>();
+        Ok(status)
+    }
+
+    /*
+                .map(|status| (
                 status.name,
                 status.line_statuses.into_iter()
                     .max_by_key(|s| s.status_severity)
@@ -55,36 +42,7 @@ impl Api {
                         reason: s.reason,
                     })))
             .filter_map(|(line, maybe_status)| maybe_status.map(|status| (line, status)))
-            .collect::<HashMap<_, _>>();
-        Ok(status)
-    }
-
-    fn from_tfl_status(status_severity: i32) -> Status {
-        match status_severity {
-            // 0 => Special service
-            1 => Status::ServiceClosed,
-            2 => Status::Suspended,
-            3 => Status::PartSuspended,
-            4 => Status::PlannedClosure,
-            5 => Status::PartClosure,
-            6 => Status::SevereDelays,
-            // 7 => Reduced service
-            // 8 => Bus service
-            9 => Status::MinorDelays,
-            10 => Status::GoodService,
-            11 => Status::PartClosure,
-            // 12 => Exit only
-            // 13 => No step free access
-            // 14 => Change of frequency
-            // 15 => Diverted
-            // 16 => Not running
-            // 17 => Issues reported
-            // 18 => No Issues
-            // 19 => Information
-            20 => Status::ServiceClosed,
-            _ => Status::UnknownInt(status_severity),
-        }
-    }
+             */
 
     fn add_api_key(&self, request: RequestBuilder) -> RequestBuilder {
         if let Some(api_key) = &self.api_key {
