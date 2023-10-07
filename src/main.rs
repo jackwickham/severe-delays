@@ -7,6 +7,7 @@ use std::sync::Arc;
 use store::{Store, AbstractStore, HistoryEntry};
 use tfl::{Tfl, TflFairing};
 use rocket::State;
+use rocket::serde::json::Json;
 use time::macros::format_description;
 
 #[macro_use] extern crate rocket;
@@ -32,6 +33,12 @@ fn format_state(entry: HistoryEntry) -> String {
     format!("{}\n{}", entry.start_time.format(format_description!("[year]-[month]-[day] [hour]:[minute]:[second]")).unwrap(), formatted_statuses.join("\n"))
 }
 
+#[get("/api")]
+async fn api(store: &State<Arc<Store>>) -> Json<Vec<HistoryEntry>> {
+    let status_history = store.get_status_history().collect::<Vec<_>>();
+    Json(status_history)
+}
+
 #[launch]
 fn rocket() -> _ {
     let store = Arc::new(store::create_store());
@@ -40,5 +47,5 @@ fn rocket() -> _ {
         .manage(store)
         .manage(tfl.clone())
         .attach(TflFairing::new(tfl))
-        .mount("/", routes![index])
+        .mount("/", routes![index, api])
 }

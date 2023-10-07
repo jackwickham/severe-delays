@@ -2,6 +2,7 @@ mod memory;
 
 use std::collections::HashMap;
 
+use serde::Serialize;
 use time::OffsetDateTime;
 
 use crate::types::LineStatus;
@@ -22,7 +23,7 @@ pub fn create_store() -> Store {
     MemoryStore::new()
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct HistoryEntry {
     pub start_time: OffsetDateTime,
     pub status: State,
