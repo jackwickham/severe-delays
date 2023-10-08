@@ -1,4 +1,4 @@
-FROM scratch
+FROM debian:latest
 COPY ./target/release/severe-delays /app/severe-delays
 WORKDIR /app
-ENTRYPOINT ["/app/severe-delays"]
+CMD ["/app/severe-delays"]
