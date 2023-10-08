@@ -4,7 +4,7 @@ use log::{info, warn};
 use rocket::tokio;
 use serde_json::Value;
 
-use crate::{types::LineStatus, store::{AbstractStore, Store}};
+use crate::store::{AbstractStore, Store};
 use super::api::Api;
 
 
@@ -25,14 +25,14 @@ impl Tfl {
             interval.tick().await;
             let status = self.api.load_status().await;
             match status {
-                Ok(status) => self.update_status(store, status),
+                Ok(status) => self.update_status(store, status).await,
                 Err(err) => warn!("Error reloading TFL status: {:?}", err),
             }
         }
     }
 
-    fn update_status(&self, store: &Store, status: HashMap<String, Value>) {
-        store.set_status(status);
+    async fn update_status(&self, store: &Store, status: HashMap<String, Value>) {
+        store.set_status(status).await;
         info!("Updated status");
     }
 }

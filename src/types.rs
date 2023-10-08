@@ -6,7 +6,7 @@ pub struct LineStatus {
     pub reason: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Status {
     UnknownInt(i32),
     GoodService,

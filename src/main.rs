@@ -8,9 +8,9 @@ use std::sync::Arc;
 
 use cors::CorsFairing;
 use serde::Serialize;
-use store::{Store, AbstractStore};
+use store::{Store, AbstractStore, StoreFairing};
 use tfl::{Tfl, TflFairing};
-use rocket::State;
+use rocket::{State, form::FromFormField};
 use rocket::serde::json::Json;
 use time::{OffsetDateTime, format_description};
 
@@ -36,24 +36,28 @@ impl Serialize for SerializableDateTime {
         }
 }
 
+impl <'a> FromFormField<'a> for SerializableDateTime {
+    fn from_value(field: rocket::form::ValueField<'a>) -> rocket::form::Result<'a, Self> {
+        let dt = OffsetDateTime::parse(&field.value, &format_description::well_known::Rfc3339).map_err(|_| rocket::form::Error::validation("Invalid date"))?;
+        Ok(SerializableDateTime(dt))
+    }
+}
+
 impl From<OffsetDateTime> for SerializableDateTime {
     fn from(dt: OffsetDateTime) -> Self {
         SerializableDateTime(dt)
     }
 }
 
-#[get("/<_..>")]
-async fn index(store: &State<Arc<Store>>) -> String {
-    let status_history = store.get_status_history(OffsetDateTime::now_utc() - time::Duration::days(1), OffsetDateTime::now_utc());
-    status_history.into_iter()
-        .map(|(line_id, history)| line_id)
-        .collect::<Vec<String>>()
-        .join("\n\n")
+impl Into<OffsetDateTime> for SerializableDateTime {
+    fn into(self) -> OffsetDateTime {
+        self.0
+    }
 }
 
-#[get("/api")]
-async fn api(store: &State<Arc<Store>>) -> Json<HashMap<String, Vec<ApiLineStatusEntry>>> {
-    let status_history = store.get_status_history(OffsetDateTime::now_utc() - time::Duration::days(1), OffsetDateTime::now_utc());
+#[get("/api/v1/history?<from>&<to>")]
+async fn history(store: &State<Arc<Store>>, from: SerializableDateTime, to: SerializableDateTime) -> Json<HashMap<String, Vec<ApiLineStatusEntry>>> {
+    let status_history = store.get_status_history(from.into(), to.into()).await;
     let response = status_history.into_iter()
         .map(|(line, entries)| {
             let entries = entries.into_iter()
@@ -66,7 +70,16 @@ async fn api(store: &State<Arc<Store>>) -> Json<HashMap<String, Vec<ApiLineStatu
                         to: entry.end_time.map(SerializableDateTime::from),
                     })
                 })
-                .collect::<Vec<_>>();
+                .fold(Vec::<ApiLineStatusEntry>::new(), |mut acc, entry| {
+                    if let Some(last_entry) = acc.last_mut() {
+                        if last_entry.status == entry.status && last_entry.reason == entry.reason {
+                            last_entry.to = entry.to;
+                            return acc;
+                        }
+                    }
+                    acc.push(entry);
+                    acc
+                });
             (line, entries)
         })
         .collect::<HashMap<_, _>>();
@@ -75,18 +88,17 @@ async fn api(store: &State<Arc<Store>>) -> Json<HashMap<String, Vec<ApiLineStatu
 
 /// Handle OPTION requests to send CORS headers
 #[options("/<_..>")]
-fn all_options() {
+fn options() {
     // Intentionally empty
 }
 
 #[launch]
-fn rocket() -> _ {
-    let store = Arc::new(store::create_store());
+async fn rocket() -> _ {
     let tfl = Arc::new(Tfl::new(None));
     rocket::build()
-        .manage(store)
         .manage(tfl.clone())
+        .attach(StoreFairing::new())
         .attach(CorsFairing)
         .attach(TflFairing::new(tfl))
-        .mount("/", routes![index, api])
+        .mount("/", routes![history, options])
 }

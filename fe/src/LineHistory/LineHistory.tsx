@@ -1,14 +1,19 @@
-import {For, type Component, createResource} from "solid-js";
+import {For, type Component, createResource, createSignal} from "solid-js";
 import {HistoryEntry, Line} from "./Line";
 import {LineStatus, State} from "./types";
 import {loadStatuses} from "../api/api";
 import { Status } from "../api/types";
+import { Button } from "../components/Button";
 
 export const LineHistory: Component = () => {
-  const displayRange = {
-    start: new Date("2023-10-07T23:00:00Z"),
+  const [displayRange, setDisplayRange] = createSignal({
+    start: new Date(new Date().getTime() - 1000 * 60 * 60 * 4),
     end: new Date(),
-  };
+  });
+  const refreshDisplayRange = () => setDisplayRange({
+    start: new Date(new Date().getTime() - 1000 * 60 * 60 * 4),
+    end: new Date(),
+  });
   // Colours from https://content.tfl.gov.uk/tfl-colour-standard-issue-08.pdf
   const lineColors: { [line: string]: {r: number, g: number, b: number} } = {
     bakerloo: { r: 166, g: 90, b: 42},
@@ -27,7 +32,7 @@ export const LineHistory: Component = () => {
       g: 0,
       b: 0,
     },
-    picadilly: {
+    piccadilly: {
       r: 0, g: 15, b: 159
     },
     victoria: {
@@ -48,7 +53,7 @@ export const LineHistory: Component = () => {
       r: 0, g: 175, b: 170,
     },
   };
-  const [apiResponse] = createResource(async () => await loadStatuses());
+  const [apiResponse] = createResource(displayRange, async (range) => await loadStatuses(range.start, range.end));
   const lines = () => {
     const resp = apiResponse();
     if (!resp) {
@@ -68,21 +73,27 @@ export const LineHistory: Component = () => {
         name: lineId,
       });
     }
+    result.sort((a, b) => a.name.localeCompare(b.name));
     return result;
   };
   return (
-    <div class="space-y-10">
-      <For each={lines()}>
-        {(line) => (
-          <Line
-            name={line.name}
-            statusHistory={line.statusHistory}
-            color={line.color}
-            displayRange={displayRange}
-          />
-        )}
-      </For>
-    </div>
+    <>
+      <div class="flex flex-row justify-end">
+        <Button label="Refresh" onClick={() => refreshDisplayRange()} />
+      </div>
+      <div class="space-y-10 mb-20">
+        <For each={lines()}>
+          {(line) => (
+            <Line
+              name={line.name}
+              statusHistory={line.statusHistory}
+              color={line.color}
+              displayRange={displayRange()}
+            />
+          )}
+        </For>
+      </div>
+    </>
   );
 };
 

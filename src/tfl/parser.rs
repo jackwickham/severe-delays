@@ -1,6 +1,5 @@
 use serde::Deserialize;
 use serde_json::Value;
-use time::OffsetDateTime;
 
 use crate::types::{LineStatus, Status};
 
@@ -25,11 +24,11 @@ pub fn try_parse(line_id: &str, value: &Value) -> Option<LineStatus> {
         })
         .ok()?;
     status.line_statuses.into_iter()
-        .max_by_key(|s| s.status_severity)
         .map(|s| LineStatus {
             status: from_tfl_status(s.status_severity),
             reason: s.reason
         })
+        .max_by_key(|s| s.status)
 }
 
 fn from_tfl_status(status_severity: i32) -> Status {

@@ -17,8 +17,9 @@ impl MemoryStore {
     }
 }
 
+#[async_trait]
 impl AbstractStore for MemoryStore {
-    fn get_status_history<'a>(&'a self, start_time: OffsetDateTime, end_time: OffsetDateTime) -> HashMap<String, Vec<LineHistoryEntry>> {
+    async fn get_status_history<'a>(&'a self, start_time: OffsetDateTime, end_time: OffsetDateTime) -> HashMap<String, Vec<LineHistoryEntry>> {
         let history = self.history.read().unwrap();
         history.iter()
             .map(|(line, history)| {
@@ -31,7 +32,7 @@ impl AbstractStore for MemoryStore {
             .collect::<HashMap<_, _>>()
     }
 
-    fn set_status(&self, status_by_line: HashMap<String, Value>) {
+    async fn set_status(&self, status_by_line: HashMap<String, Value>) {
         let now = OffsetDateTime::now_utc();
         let mut history = self.history.write().unwrap();
         for (line, new_data) in status_by_line {

@@ -1,14 +1,19 @@
 mod memory;
+mod sqlite;
+mod fairing;
 
 use std::collections::HashMap;
 
+use async_trait::async_trait;
 use serde::Serialize;
 use serde_json::Value;
 use time::OffsetDateTime;
 
-use self::memory::MemoryStore;
+use self::{memory::MemoryStore, sqlite::SqliteStore};
 
-pub type Store = MemoryStore;
+pub use self::fairing::StoreFairing;
+
+pub type Store = SqliteStore;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct LineHistoryEntry {
@@ -17,11 +22,12 @@ pub struct LineHistoryEntry {
     pub data: Value,
 }
 
+#[async_trait]
 pub trait AbstractStore {
-    fn get_status_history<'a>(&'a self, start_time: OffsetDateTime, end_time: OffsetDateTime) -> HashMap<String, Vec<LineHistoryEntry>>;
-    fn set_status(&self, status_by_line: HashMap<String, Value>);
+    async fn get_status_history<'a>(&'a self, start_time: OffsetDateTime, end_time: OffsetDateTime) -> HashMap<String, Vec<LineHistoryEntry>>;
+    async fn set_status(&self, status_by_line: HashMap<String, Value>);
 }
 
-pub fn create_store() -> Store {
-    MemoryStore::new()
+pub async fn create_store() -> Store {
+    SqliteStore::new().await
 }
