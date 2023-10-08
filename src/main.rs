@@ -4,13 +4,15 @@ mod types;
 mod cors;
 
 use std::collections::HashMap;
+use std::path::{PathBuf, Path};
 use std::sync::Arc;
 
 use cors::CorsFairing;
+use rocket::fs::NamedFile;
 use serde::Serialize;
 use store::{Store, AbstractStore, StoreFairing};
 use tfl::{Tfl, TflFairing};
-use rocket::{State, form::FromFormField};
+use rocket::{State, form::FromFormField, http::Status};
 use rocket::serde::json::Json;
 use time::{OffsetDateTime, format_description};
 
@@ -86,6 +88,20 @@ async fn history(store: &State<Arc<Store>>, from: SerializableDateTime, to: Seri
     Json(response)
 }
 
+#[get("/api/<_..>")]
+async fn api_not_found() -> Status {
+    Status::NotFound
+}
+
+#[get("/<path..>")]
+async fn static_file(path: PathBuf) -> Option<NamedFile> {
+    let mut resolved_path = Path::new("fe/dist").join(path).to_path_buf();
+    if resolved_path.is_dir() {
+        resolved_path.push("index.html");
+    }
+    NamedFile::open(resolved_path).await.ok()
+}
+
 /// Handle OPTION requests to send CORS headers
 #[options("/<_..>")]
 fn options() {
@@ -100,5 +116,5 @@ async fn rocket() -> _ {
         .attach(StoreFairing::new())
         .attach(CorsFairing)
         .attach(TflFairing::new(tfl))
-        .mount("/", routes![history, options])
+        .mount("/", routes![history, api_not_found, static_file, options])
 }
