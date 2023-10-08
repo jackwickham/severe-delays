@@ -2,6 +2,7 @@ FROM debian:latest
 
 RUN apt-get update && apt-get install -y ca-certificates openssl
 
+COPY ./Rocket.toml /app/Rocket.toml
 COPY ./target/release/severe-delays /app/severe-delays
 COPY ./fe/dist /app/fe/dist
 
