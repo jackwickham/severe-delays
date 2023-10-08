@@ -22,7 +22,7 @@ impl SqliteStore {
     pub async fn new() -> Self {
         let pool = sqlx::sqlite::SqlitePoolOptions::new()
             .max_connections(5)
-            .connect("sqlite:./store.db")
+            .connect("sqlite:./store/store.db")
             .await
             .unwrap();
         sqlx::query("CREATE TABLE IF NOT EXISTS history (

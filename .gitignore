@@ -1,4 +1,4 @@
 /target
-store.db*
+/store
 fe/node_modules
 fe/dist
