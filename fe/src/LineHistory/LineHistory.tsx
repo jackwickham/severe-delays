@@ -4,14 +4,16 @@ import {LineStatus, State} from "./types";
 import {loadStatuses} from "../api/api";
 import { Status } from "../api/types";
 import { Button } from "../components/Button";
+import { SplitButton } from "../components/SplitButton";
 
 export const LineHistory: Component = () => {
+  const [duration, setDuration] = createSignal(1000 * 60 * 60 * 4);
   const [displayRange, setDisplayRange] = createSignal({
-    start: new Date(new Date().getTime() - 1000 * 60 * 60 * 4),
+    start: new Date(new Date().getTime() - duration()),
     end: new Date(),
   });
   const refreshDisplayRange = () => setDisplayRange({
-    start: new Date(new Date().getTime() - 1000 * 60 * 60 * 4),
+    start: new Date(new Date().getTime() - duration()),
     end: new Date(),
   });
   // Colours from https://content.tfl.gov.uk/tfl-colour-standard-issue-08.pdf
@@ -78,8 +80,30 @@ export const LineHistory: Component = () => {
   };
   return (
     <>
-      <div class="flex flex-row justify-end">
-        <Button label="Refresh" onClick={() => refreshDisplayRange()} />
+      <div class="flex flex-row justify-end space-x-4">
+        <SplitButton buttons={[{
+          label: "1 week",
+          active: duration() === 1000 * 86400 * 7,
+          onClick: () => {
+            setDuration(1000 * 86400 * 7);
+            refreshDisplayRange();
+          },
+        }, {
+          label: "1 day",
+          active: duration() === 1000 * 86400,
+          onClick: () => {
+            setDuration(1000 * 86400);
+            refreshDisplayRange();
+          },
+        }, {
+          label: "4 hours",
+          active: duration() === 1000 * 60 * 60 * 4,
+          onClick: () => {
+            setDuration(1000 * 60 * 60 * 4);
+            refreshDisplayRange();
+          },
+        }]} />
+        <Button label={apiResponse.loading ? "Refreshing..." : apiResponse.error ? "Refresh (failed)" : "Refresh"} onClick={() => refreshDisplayRange()} />
       </div>
       <div class="space-y-10 mb-20">
         <For each={lines()}>
