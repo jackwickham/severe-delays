@@ -1,6 +1,6 @@
+mod fairing;
 mod memory;
 mod sqlite;
-mod fairing;
 
 use std::collections::HashMap;
 
@@ -24,7 +24,11 @@ pub struct LineHistoryEntry {
 
 #[async_trait]
 pub trait AbstractStore {
-    async fn get_status_history<'a>(&'a self, start_time: OffsetDateTime, end_time: OffsetDateTime) -> HashMap<String, Vec<LineHistoryEntry>>;
+    async fn get_status_history<'a>(
+        &'a self,
+        start_time: OffsetDateTime,
+        end_time: OffsetDateTime,
+    ) -> HashMap<String, Vec<LineHistoryEntry>>;
     async fn set_status(&self, status_by_line: HashMap<String, Value>);
 }
 

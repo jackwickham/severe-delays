@@ -1,4 +1,4 @@
-import { Component } from "solid-js";
+import {Component} from "solid-js";
 
 export interface ButtonProps {
   label: string;
@@ -9,7 +9,8 @@ export interface ButtonProps {
 }
 
 export const Button: Component<ButtonProps> = (props: ButtonProps) => {
-  return <button
+  return (
+    <button
       class={`border-2 border-slate-700 px-2 py-1 ${props.class}`}
       classList={{
         "bg-slate-700": props.active,
@@ -17,5 +18,9 @@ export const Button: Component<ButtonProps> = (props: ButtonProps) => {
         "text-slate-100": props.active,
         "rounded-md": props.rounded !== false,
       }}
-      onClick={props.onClick}>{props.label}</button>;
+      onClick={props.onClick}
+    >
+      {props.label}
+    </button>
+  );
 };

@@ -1,10 +1,10 @@
-
 use std::collections::HashMap;
 
 use reqwest::RequestBuilder;
 use serde_json::Value;
 
-const STATUS_API_URI: &'static str = "https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground,elizabeth-line/Status";
+const STATUS_API_URI: &'static str =
+    "https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground,elizabeth-line/Status";
 
 pub struct Api {
     client: reqwest::Client,
@@ -20,9 +20,13 @@ impl Api {
     }
 
     pub async fn load_status(&self) -> Result<HashMap<String, Value>, ApiError> {
-        let resp = self.add_api_key(self.client.get(STATUS_API_URI)).send().await?;
+        let resp = self
+            .add_api_key(self.client.get(STATUS_API_URI))
+            .send()
+            .await?;
         let tfl_status = resp.json::<Vec<Value>>().await?;
-        let status = tfl_status.into_iter()
+        let status = tfl_status
+            .into_iter()
             .filter_map(|value| Some((value.get("id")?.as_str()?.to_string(), value)))
             .collect::<HashMap<String, Value>>();
         Ok(status)

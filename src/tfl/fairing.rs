@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use rocket::{Rocket, Orbit};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::tokio::spawn;
+use rocket::{Orbit, Rocket};
 
 use crate::store::Store;
 
@@ -12,9 +12,7 @@ pub struct TflFairing {
 
 impl TflFairing {
     pub fn new(tfl: Arc<crate::tfl::Tfl>) -> Self {
-        TflFairing {
-            tfl,
-        }
+        TflFairing { tfl }
     }
 }
 
@@ -23,7 +21,7 @@ impl Fairing for TflFairing {
     fn info(&self) -> Info {
         Info {
             name: "TFL Background Task",
-            kind: Kind::Liftoff
+            kind: Kind::Liftoff,
         }
     }
 

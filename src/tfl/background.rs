@@ -4,9 +4,8 @@ use log::{info, warn};
 use rocket::tokio;
 use serde_json::Value;
 
-use crate::store::{AbstractStore, Store};
 use super::api::Api;
-
+use crate::store::{AbstractStore, Store};
 
 pub struct Tfl {
     api: Api,

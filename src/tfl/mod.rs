@@ -3,6 +3,6 @@ mod background;
 mod fairing;
 mod parser;
 
-pub use fairing::TflFairing;
 pub use background::Tfl;
+pub use fairing::TflFairing;
 pub use parser::try_parse;

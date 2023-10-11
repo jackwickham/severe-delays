@@ -77,8 +77,10 @@ export const Line: Component<LineProps> = (props: LineProps) => {
     let total = 0;
     for (const statusHistory of statusHistoryInRange()) {
       if (statusHistory.status.state !== State.OTHER) {
-        durations[statusHistory.status.state] = (durations[statusHistory.status.state] || 0) +
-          statusHistory.displayEndTime - statusHistory.displayStartTime;
+        durations[statusHistory.status.state] =
+          (durations[statusHistory.status.state] || 0) +
+          statusHistory.displayEndTime -
+          statusHistory.displayStartTime;
         total += statusHistory.displayEndTime - statusHistory.displayStartTime;
       }
     }
@@ -101,9 +103,7 @@ export const Line: Component<LineProps> = (props: LineProps) => {
         <Show when={props.color}>
           <div
             class="inline-block w-4 h-4 rounded-full mr-2"
-            style={`background-color: rgb(${props.color!.r}, ${props.color!.g}, ${
-              props.color!.b
-            })`}
+            style={`background-color: rgb(${props.color!.r}, ${props.color!.g}, ${props.color!.b})`}
           ></div>
         </Show>
         {props.name}

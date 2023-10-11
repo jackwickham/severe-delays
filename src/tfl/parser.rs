@@ -16,17 +16,18 @@ struct TflLineStatus {
     pub reason: Option<String>,
 }
 
-
 pub fn try_parse(line_id: &str, value: &Value) -> Option<LineStatus> {
     let status: TflStatus = serde_json::from_value(value.clone())
         .map_err(|err| {
             log::warn!("Error parsing TFL status for line {}: {:?}", line_id, err);
         })
         .ok()?;
-    status.line_statuses.into_iter()
+    status
+        .line_statuses
+        .into_iter()
         .map(|s| LineStatus {
             status: from_tfl_status(s.status_severity),
-            reason: s.reason
+            reason: s.reason,
         })
         .max_by_key(|s| s.status)
 }

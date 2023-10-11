@@ -1,11 +1,11 @@
+mod config;
+mod cors;
 mod store;
 mod tfl;
 mod types;
-mod cors;
-mod config;
 
 use std::collections::HashMap;
-use std::path::{PathBuf, Path};
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use config::Config;
@@ -14,14 +14,15 @@ use rocket::fairing::AdHoc;
 use rocket::fs::NamedFile;
 use rocket::http::Header;
 use rocket::response::Responder;
-use serde::Serialize;
-use store::{Store, AbstractStore, StoreFairing};
-use tfl::{Tfl, TflFairing};
-use rocket::{State, form::FromFormField, http::Status};
 use rocket::serde::json::Json;
-use time::{OffsetDateTime, format_description};
+use rocket::{form::FromFormField, http::Status, State};
+use serde::Serialize;
+use store::{AbstractStore, Store, StoreFairing};
+use tfl::{Tfl, TflFairing};
+use time::{format_description, OffsetDateTime};
 
-#[macro_use] extern crate rocket;
+#[macro_use]
+extern crate rocket;
 
 #[derive(Debug, Clone, Serialize)]
 struct ApiLineStatusEntry {
@@ -38,14 +39,20 @@ impl Serialize for SerializableDateTime {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
-        {
-            serializer.serialize_str(&self.0.format(&format_description::well_known::Rfc3339).unwrap())
-        }
+    {
+        serializer.serialize_str(
+            &self
+                .0
+                .format(&format_description::well_known::Rfc3339)
+                .unwrap(),
+        )
+    }
 }
 
-impl <'a> FromFormField<'a> for SerializableDateTime {
+impl<'a> FromFormField<'a> for SerializableDateTime {
     fn from_value(field: rocket::form::ValueField<'a>) -> rocket::form::Result<'a, Self> {
-        let dt = OffsetDateTime::parse(&field.value, &format_description::well_known::Rfc3339).map_err(|_| rocket::form::Error::validation("Invalid date"))?;
+        let dt = OffsetDateTime::parse(&field.value, &format_description::well_known::Rfc3339)
+            .map_err(|_| rocket::form::Error::validation("Invalid date"))?;
         Ok(SerializableDateTime(dt))
     }
 }
@@ -67,7 +74,7 @@ struct AdditionalHeadersResponse<'a, R> {
     headers: Vec<Header<'a>>,
 }
 
-impl <R> AdditionalHeadersResponse<'static, R> {
+impl<R> AdditionalHeadersResponse<'static, R> {
     fn new(inner: R) -> Self {
         Self {
             inner,
@@ -76,19 +83,22 @@ impl <R> AdditionalHeadersResponse<'static, R> {
     }
 }
 
-impl <'a, R> AdditionalHeadersResponse<'a, R> {
+impl<'a, R> AdditionalHeadersResponse<'a, R> {
     fn with_header(mut self, header: Header<'a>) -> AdditionalHeadersResponse<'a, R> {
         self.headers.push(header);
         self
     }
 
     fn immutable(mut self) -> Self {
-        self.headers.push(Header::new("Cache-Control", "max-age=31536000, public, immutable"));
+        self.headers.push(Header::new(
+            "Cache-Control",
+            "max-age=31536000, public, immutable",
+        ));
         self
     }
 }
 
-impl <'r, 'o: 'r, R: Responder<'r, 'o>> Responder<'r, 'o> for AdditionalHeadersResponse<'o, R> {
+impl<'r, 'o: 'r, R: Responder<'r, 'o>> Responder<'r, 'o> for AdditionalHeadersResponse<'o, R> {
     fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
         let mut response = self.inner.respond_to(request)?;
         for header in self.headers {
@@ -99,11 +109,17 @@ impl <'r, 'o: 'r, R: Responder<'r, 'o>> Responder<'r, 'o> for AdditionalHeadersR
 }
 
 #[get("/api/v1/history?<from>&<to>")]
-async fn history(store: &State<Arc<Store>>, from: SerializableDateTime, to: SerializableDateTime) -> Json<HashMap<String, Vec<ApiLineStatusEntry>>> {
+async fn history(
+    store: &State<Arc<Store>>,
+    from: SerializableDateTime,
+    to: SerializableDateTime,
+) -> Json<HashMap<String, Vec<ApiLineStatusEntry>>> {
     let status_history = store.get_status_history(from.into(), to.into()).await;
-    let response = status_history.into_iter()
+    let response = status_history
+        .into_iter()
         .map(|(line, entries)| {
-            let entries = entries.into_iter()
+            let entries = entries
+                .into_iter()
                 .filter_map(|entry| {
                     let parsed_entry = tfl::try_parse(&line, &entry.data)?;
                     Some(ApiLineStatusEntry {

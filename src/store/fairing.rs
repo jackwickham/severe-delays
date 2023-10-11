@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use rocket::{fairing::{Fairing, Kind, Info}, Rocket};
+use rocket::{
+    fairing::{Fairing, Info, Kind},
+    Rocket,
+};
 
 use super::Store;
 

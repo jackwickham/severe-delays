@@ -1,4 +1,4 @@
-use std::{sync::RwLock, collections::HashMap};
+use std::{collections::HashMap, sync::RwLock};
 
 use serde_json::Value;
 use time::OffsetDateTime;
@@ -19,13 +19,22 @@ impl MemoryStore {
 
 #[async_trait]
 impl AbstractStore for MemoryStore {
-    async fn get_status_history<'a>(&'a self, start_time: OffsetDateTime, end_time: OffsetDateTime) -> HashMap<String, Vec<LineHistoryEntry>> {
+    async fn get_status_history<'a>(
+        &'a self,
+        start_time: OffsetDateTime,
+        end_time: OffsetDateTime,
+    ) -> HashMap<String, Vec<LineHistoryEntry>> {
         let history = self.history.read().unwrap();
-        history.iter()
+        history
+            .iter()
             .map(|(line, history)| {
-                let history = history.iter()
-                    .filter(|entry| entry.end_time.map_or(true, |t| t >= start_time) && entry.start_time <= end_time)
-                     .map(|entry| (*entry).clone())
+                let history = history
+                    .iter()
+                    .filter(|entry| {
+                        entry.end_time.map_or(true, |t| t >= start_time)
+                            && entry.start_time <= end_time
+                    })
+                    .map(|entry| (*entry).clone())
                     .collect::<Vec<_>>();
                 (line.clone(), history)
             })
