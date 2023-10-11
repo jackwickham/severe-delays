@@ -2,3 +2,4 @@
 /store
 fe/node_modules
 fe/dist
+.vscode
