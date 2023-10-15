@@ -19,11 +19,8 @@ impl Fairing for CorsFairing {
 
     async fn on_response<'r>(&self, request: &'r Request<'_>, response: &mut Response<'r>) {
         if let Some(origin) = request.headers().get_one("origin") {
-            let origin_allowed = request
-                .rocket()
-                .state::<Config>()
-                .unwrap()
-                .cors_origins
+            let allowed_origins = &request.rocket().state::<Config>().unwrap().cors_origins;
+            let origin_allowed = allowed_origins
                 .iter()
                 .any(|allowed_origin| allowed_origin == origin);
             if origin_allowed {
@@ -33,7 +30,11 @@ impl Fairing for CorsFairing {
                     "POST, PATCH, PUT, DELETE, HEAD, OPTIONS, GET",
                 ));
             } else {
-                log::warn!("Cors request from disallowed origin {}", origin);
+                log::warn!(
+                    "Cors request from disallowed origin {} (allowed origins: {:?})",
+                    origin,
+                    allowed_origins,
+                );
             }
         }
     }

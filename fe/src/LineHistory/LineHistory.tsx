@@ -1,4 +1,4 @@
-import {For, type Component, createResource, createSignal} from "solid-js";
+import {For, type Component, createResource, createSignal, createEffect} from "solid-js";
 import {HistoryEntry, Line} from "./Line";
 import {State} from "./types";
 import {loadStatuses} from "../api/api";
@@ -71,7 +71,10 @@ export const LineHistory: Component = () => {
     async (range) => await loadStatuses(range.start, range.end)
   );
   const lines = () => {
-    const resp = apiResponse();
+    if (apiResponse.error) {
+      return [];
+    }
+    const resp = apiResponse.latest;
     if (!resp) {
       return [];
     }
@@ -98,7 +101,7 @@ export const LineHistory: Component = () => {
   };
   return (
     <>
-      <div class="flex flex-row justify-end space-x-4">
+      <div class="flex flex-row justify-end space-x-4 text-sm mb-2">
         <SplitButton
           buttons={[
             {
@@ -129,10 +132,10 @@ export const LineHistory: Component = () => {
         />
         <Button
           label={
-            apiResponse.loading
-              ? "Refreshing..."
-              : apiResponse.error
+            apiResponse.error
               ? "Refresh (failed)"
+              : apiResponse.loading
+              ? "Refreshing..."
               : "Refresh"
           }
           onClick={() => refreshDisplayRange()}

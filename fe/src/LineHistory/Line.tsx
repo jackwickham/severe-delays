@@ -1,4 +1,4 @@
-import {For, type Component, createMemo, Show} from "solid-js";
+import {For, type Component, createMemo, Show, createSignal} from "solid-js";
 import {LineStatus, State} from "./types";
 import {Popover} from "../Popover";
 
@@ -126,6 +126,7 @@ export const Line: Component<LineProps> = (props: LineProps) => {
           {(entry, i) => {
             const basis = (entry.displayEndTime - entry.displayStartTime) * basisMultiplier();
             const colour = getStatusColour(entry.status.state);
+            const [onPopoverShowHandler, setOnPopoverShowHandler] = createSignal<() => void>();
             return (
               <div
                 class="flex-grow flex-shrink h-2 hover:py-1 transition-all ease-linear box-content group/popover"
@@ -137,15 +138,16 @@ export const Line: Component<LineProps> = (props: LineProps) => {
                 style={{
                   "flex-basis": `${basis}px`,
                 }}
+                onMouseOver={() => onPopoverShowHandler()?.()}
               >
-                <div class="relative mx-auto w-0">
-                  <Popover>
-                    <div class="text-xs flex flex-col space-y-1">
+                <div class="relative w-full h-full hidden group-hover/popover:block">
+                  <Popover setOnShowHandler={setOnPopoverShowHandler}>
+                    <div class="text-sm flex flex-col space-y-1">
                       <p class="font-semibold">{entry.status.state}</p>
                       <Show when={entry.status.reason !== null}>
                         <p>{entry.status.reason}</p>
                       </Show>
-                      <p class="text-slate-500">
+                      <p class="text-slate-500 text-xs">
                         {renderTimeRange(entry.startTime, entry.endTime)}
                       </p>
                     </div>
