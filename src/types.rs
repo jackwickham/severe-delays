@@ -10,9 +10,11 @@ pub struct LineStatus {
 pub enum Status {
     Suspended,
     PartSuspended,
-    Closed,
+    PlannedClosure,
     PartClosure,
+    ServiceClosed,
     SevereDelays,
+    ReducedService,
     MinorDelays,
     GoodService,
     Other,

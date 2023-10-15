@@ -197,7 +197,7 @@ export const Line: Component<LineProps> = (props: LineProps) => {
   );
 };
 
-const getStatusColour = (state: State) => {
+const getStatusColour = (state: State): string => {
   switch (state) {
     case State.GOOD_SERVICE:
       return "bg-green-500";
@@ -209,11 +209,15 @@ const getStatusColour = (state: State) => {
       return "bg-red-700";
     case State.SUSPENDED:
       return "bg-red-800";
-    case State.PART_CLOSED:
+    case State.PART_CLOSURE:
       return "bg-red-300";
-    case State.CLOSED:
+    case State.PLANNED_CLOSURE:
       return "bg-red-400";
+    case State.REDUCED_SERVICE:
+      return "bg-yellow-500";
     case State.OTHER:
+    case State.SERVICE_CLOSED:
+    default:
       return "bg-gray-500";
   }
 };

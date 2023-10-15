@@ -36,18 +36,18 @@ pub fn try_parse(line_id: &str, value: &Value) -> Option<Vec<LineStatus>> {
 
 fn from_tfl_status(status_severity: i32) -> Status {
     match status_severity {
-        // 0 => Special service
-        1 => Status::Closed,
+        0 => Status::ReducedService, // Special service
+        // 1 => Closed,
         2 => Status::Suspended,
         3 => Status::PartSuspended,
-        4 => Status::Closed,
+        4 => Status::PlannedClosure,
         5 => Status::PartClosure,
         6 => Status::SevereDelays,
-        // 7 => Reduced service
+        7 => Status::ReducedService,
         // 8 => Bus service
         9 => Status::MinorDelays,
         10 => Status::GoodService,
-        11 => Status::PartClosure,
+        // 11 => Part closed
         // 12 => Exit only
         // 13 => No step free access
         // 14 => Change of frequency
@@ -56,7 +56,7 @@ fn from_tfl_status(status_severity: i32) -> Status {
         // 17 => Issues reported
         // 18 => No Issues
         // 19 => Information
-        20 => Status::Closed,
+        20 => Status::ServiceClosed,
         _ => Status::Other,
     }
 }

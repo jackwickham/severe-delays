@@ -14,11 +14,14 @@ export interface LineStatusEntry {
 }
 
 export type Status =
-  | "GoodService"
-  | "MinorDelays"
-  | "SevereDelays"
-  | "PartClosure"
-  | "Closed"
-  | "PartSuspended"
   | "Suspended"
+  | "PartSuspended"
+  | "PlannedClosure"
+  | "PartClosure"
+  | "ServiceClosed"
+  | "SevereDelays"
+  | "ReducedService"
+  | "MinorDelays"
+  | "GoodService"
+  | "Other"
   | string;

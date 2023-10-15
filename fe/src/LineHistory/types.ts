@@ -4,7 +4,10 @@ export enum State {
   SEVERE_DELAYS = "Severe delays",
   PART_SUSPENDED = "Part suspended",
   SUSPENDED = "Suspended",
-  PART_CLOSED = "Part closed",
+  PLANNED_CLOSURE = "Planned closure",
+  PART_CLOSURE = "Part closure",
+  SERVICE_CLOSED = "Service closed",
+  REDUCED_SERVICE = "Reduced service",
   CLOSED = "Closed",
   OTHER = "Other",
 }

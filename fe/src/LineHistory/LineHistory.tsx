@@ -168,13 +168,17 @@ const mapState = (state: Status | undefined): State => {
     case "SevereDelays":
       return State.SEVERE_DELAYS;
     case "PartClosure":
-      return State.PART_CLOSED;
-    case "Closed":
-      return State.CLOSED;
+      return State.PART_CLOSURE;
+    case "PlannedClosure":
+      return State.PLANNED_CLOSURE;
+    case "ServiceClosed":
+      return State.SERVICE_CLOSED;
     case "PartSuspended":
       return State.PART_SUSPENDED;
     case "Suspended":
       return State.SUSPENDED;
+    case "ReducedService":
+      return State.REDUCED_SERVICE;
     default:
       return State.OTHER;
   }
