@@ -13,6 +13,7 @@
   "devDependencies": {
     "@types/feather-icons": "^4.29.2",
     "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31",
     "prettier": "^3.0.3",
     "solid-devtools": "^0.27.3",
     "tailwindcss": "^3.3.3",
@@ -22,7 +23,6 @@
   },
   "dependencies": {
     "feather-icons": "^4.29.1",
-    "postcss": "^8.4.31",
     "solid-js": "^1.7.6"
   }
 }
