@@ -34,7 +34,6 @@ impl Tfl {
 
     async fn update_status(&self, store: &Store, status: HashMap<String, Value>) {
         store.set_status(status, TflUpdateChecker()).await;
-        info!("Updated status");
     }
 }
 
