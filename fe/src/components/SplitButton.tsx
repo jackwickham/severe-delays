@@ -19,7 +19,9 @@ export const SplitButton: Component<SplitButtonProps> = (props: SplitButtonProps
           {...button}
           rounded={false}
           class="first:rounded-s-md last:rounded-e-md border-l-0 first:border-l-2"
-        />
+        >
+          {button.label}
+        </Button>
       ))}
     </div>
   );

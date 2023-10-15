@@ -1,10 +1,13 @@
-import {For, type Component, createResource, createSignal} from "solid-js";
+import {For, type Component, createResource, createSignal, createEffect} from "solid-js";
 import {HistoryEntry, Line} from "./Line";
 import {State} from "./types";
 import {loadStatuses} from "../api/api";
 import {Status} from "../api/types";
 import {Button} from "../components/Button";
 import {SplitButton} from "../components/SplitButton";
+import feather from "feather-icons";
+import {Popover} from "../Popover";
+import {Settings, createSettingsStore} from "./Settings";
 
 // Colours from https://content.tfl.gov.uk/tfl-colour-standard-issue-08.pdf
 const lineColors: {[line: string]: {r: number; g: number; b: number}} = {
@@ -101,9 +104,11 @@ export const LineHistory: Component = () => {
     result.sort((a, b) => a.name.localeCompare(b.name));
     return result;
   };
+  let [settingsStore, setSettingsStore] = createSettingsStore();
   return (
     <>
       <div class="flex flex-row justify-end space-x-4 text-sm mb-2">
+        <Settings store={settingsStore} setStore={setSettingsStore} />
         <SplitButton
           buttons={[
             {
@@ -132,16 +137,13 @@ export const LineHistory: Component = () => {
             },
           ]}
         />
-        <Button
-          label={
-            apiResponse.error
-              ? "Refresh (failed)"
-              : apiResponse.loading
-              ? "Refreshing..."
-              : "Refresh"
-          }
-          onClick={() => refreshDisplayRange()}
-        />
+        <Button onClick={() => refreshDisplayRange()}>
+          {apiResponse.error
+            ? "Refresh (failed)"
+            : apiResponse.loading
+            ? "Refreshing..."
+            : "Refresh"}
+        </Button>
       </div>
       <div class="space-y-10 mb-20">
         <For each={lines()}>
@@ -151,6 +153,7 @@ export const LineHistory: Component = () => {
               statusHistory={line.statusHistory}
               color={line.color}
               displayRange={displayRange()}
+              settings={settingsStore}
             />
           )}
         </For>

@@ -60,7 +60,7 @@ export const Popover: Component<TooltipProps> = (props: TooltipProps) => {
     <div class="absolute w-full h-full" ref={containerElem}>
       <div class="flex flex-row justify-around h-0">
         <div
-          class="relative w-3 h-3 bg-white transform rotate-45"
+          class="relative w-3 h-3 bg-white shadow-lg transform rotate-45"
           classList={{
             "top-1.5": bottom(),
             "-top-2.5": !bottom(),

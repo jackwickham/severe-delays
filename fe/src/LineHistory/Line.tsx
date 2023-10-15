@@ -1,6 +1,7 @@
 import {For, type Component, createMemo, Show, createSignal} from "solid-js";
 import {LineStatus, State} from "./types";
 import {Popover} from "../Popover";
+import {Settings} from "./Settings";
 
 export interface HistoryEntry {
   startTime: Date;
@@ -20,6 +21,7 @@ export interface LineProps {
     g: number;
     b: number;
   };
+  settings: Settings;
 }
 
 interface RenderedHistoryEntry {
@@ -87,7 +89,14 @@ export const Line: Component<LineProps> = (props: LineProps) => {
     const durations: Partial<{[key in State]: number}> = {};
     let total = 0;
     for (const statusHistory of statusHistoryInRange()) {
-      if (statusHistory.overallState !== State.OTHER) {
+      if (
+        statusHistory.overallState !== State.OTHER &&
+        (props.settings.includeClosedInStats ||
+          statusHistory.overallState !== State.SERVICE_CLOSED) &&
+        (props.settings.includePlannedClosuresInStats ||
+          (statusHistory.overallState !== State.PLANNED_CLOSURE &&
+            statusHistory.overallState !== State.PART_CLOSURE))
+      ) {
         durations[statusHistory.overallState] =
           (durations[statusHistory.overallState] || 0) +
           statusHistory.displayEndTime -

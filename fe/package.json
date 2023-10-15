@@ -11,6 +11,7 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@types/feather-icons": "^4.29.2",
     "autoprefixer": "^10.4.16",
     "prettier": "^3.0.3",
     "solid-devtools": "^0.27.3",
@@ -20,7 +21,8 @@
     "vite-plugin-solid": "^2.7.0"
   },
   "dependencies": {
-    "solid-js": "^1.7.6",
-    "postcss": "^8.4.31"
+    "feather-icons": "^4.29.1",
+    "postcss": "^8.4.31",
+    "solid-js": "^1.7.6"
   }
 }

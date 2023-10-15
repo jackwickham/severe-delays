@@ -1,7 +1,7 @@
-import {Component} from "solid-js";
+import {Component, JSX} from "solid-js";
 
 export interface ButtonProps {
-  label: string;
+  children: JSX.Element;
   active?: boolean;
   class?: string;
   rounded?: boolean;
@@ -20,7 +20,7 @@ export const Button: Component<ButtonProps> = (props: ButtonProps) => {
       }}
       onClick={props.onClick}
     >
-      {props.label}
+      {props.children}
     </button>
   );
 };
