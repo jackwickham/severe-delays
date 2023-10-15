@@ -29,7 +29,16 @@ pub trait AbstractStore {
         start_time: OffsetDateTime,
         end_time: OffsetDateTime,
     ) -> HashMap<String, Vec<LineHistoryEntry>>;
-    async fn set_status(&self, status_by_line: HashMap<String, Value>);
+
+    async fn set_status<U: UpdateChecker>(
+        &self,
+        status_by_line: HashMap<String, Value>,
+        should_update: U,
+    );
+}
+
+pub trait UpdateChecker: Send + Sync {
+    fn should_update(&self, old: &Value, new: &Value) -> bool;
 }
 
 pub async fn create_store() -> Store {

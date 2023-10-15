@@ -4,7 +4,7 @@ use serde_json::Value;
 use sqlx;
 use time::OffsetDateTime;
 
-use super::{AbstractStore, LineHistoryEntry};
+use super::{AbstractStore, LineHistoryEntry, UpdateChecker};
 
 #[derive(Debug, sqlx::FromRow)]
 struct SqliteHistoryEntry {
@@ -81,7 +81,11 @@ impl AbstractStore for SqliteStore {
         )
     }
 
-    async fn set_status(&self, status_by_line: HashMap<String, Value>) {
+    async fn set_status<U: UpdateChecker>(
+        &self,
+        status_by_line: HashMap<String, Value>,
+        should_update: U,
+    ) {
         let now = OffsetDateTime::now_utc();
         let existing =
             sqlx::query_as::<_, SqliteHistoryEntry>("SELECT * FROM history WHERE end_time IS NULL")
@@ -93,7 +97,10 @@ impl AbstractStore for SqliteStore {
                 .collect::<HashMap<_, _>>();
         for (line, status) in status_by_line {
             if let Some(existing) = existing.get(&line) {
-                if &serde_json::from_slice::<Value>(&existing).unwrap() == &status {
+                if !should_update.should_update(
+                    &serde_json::from_slice::<Value>(&existing).unwrap(),
+                    &status,
+                ) {
                     continue;
                 }
                 log::info!(

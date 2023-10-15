@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::RwLock};
 use serde_json::Value;
 use time::OffsetDateTime;
 
-use super::{AbstractStore, LineHistoryEntry};
+use super::{AbstractStore, LineHistoryEntry, UpdateChecker};
 
 pub struct MemoryStore {
     history: RwLock<HashMap<String, Vec<LineHistoryEntry>>>,
@@ -41,7 +41,11 @@ impl AbstractStore for MemoryStore {
             .collect::<HashMap<_, _>>()
     }
 
-    async fn set_status(&self, status_by_line: HashMap<String, Value>) {
+    async fn set_status<U: UpdateChecker>(
+        &self,
+        status_by_line: HashMap<String, Value>,
+        _should_update: U,
+    ) {
         let now = OffsetDateTime::now_utc();
         let mut history = self.history.write().unwrap();
         for (line, new_data) in status_by_line {
