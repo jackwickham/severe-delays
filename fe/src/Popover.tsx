@@ -71,7 +71,10 @@ export const Popover: Component<TooltipProps> = (props: TooltipProps) => {
         class={`absolute w-80 my-[0.6rem] rounded flex flex-row ${props.class || ""}`}
         style={style()}
       >
-        <div class="bg-white shadow-lg rounded max-w-fit min-w-4 p-2" ref={popoverElem}>
+        <div
+          class="bg-white shadow-lg rounded max-w-fit min-w-4 p-2 max-h-[30rem] overflow-y-auto"
+          ref={popoverElem}
+        >
           {props.children}
         </div>
       </div>

@@ -8,12 +8,12 @@ pub struct LineStatus {
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Status {
-    UnknownInt(i32),
-    GoodService,
-    MinorDelays,
-    SevereDelays,
-    PartClosure,
-    Closed,
-    PartSuspended,
     Suspended,
+    PartSuspended,
+    Closed,
+    PartClosure,
+    SevereDelays,
+    MinorDelays,
+    GoodService,
+    Other,
 }

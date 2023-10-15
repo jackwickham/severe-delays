@@ -4,7 +4,8 @@ import {Popover} from "../Popover";
 
 export interface HistoryEntry {
   startTime: Date;
-  status: LineStatus;
+  statuses: LineStatus[];
+  overallState: State;
 }
 
 export interface LineProps {
@@ -26,7 +27,13 @@ interface RenderedHistoryEntry {
   endTime: Date | null;
   displayStartTime: number;
   displayEndTime: number;
-  status: LineStatus;
+  statuses: LineStatus[];
+  overallState: State;
+}
+
+interface RenderedLineStatus {
+  state: State[];
+  reason: string | null;
 }
 
 export const Line: Component<LineProps> = (props: LineProps) => {
@@ -42,10 +49,13 @@ export const Line: Component<LineProps> = (props: LineProps) => {
         endTime: props.statusHistory[0].startTime,
         displayStartTime: props.displayRange.start.getTime(),
         displayEndTime: props.statusHistory[0].startTime.getTime(),
-        status: {
-          state: State.OTHER,
-          reason: "No data",
-        },
+        statuses: [
+          {
+            state: State.OTHER,
+            reason: "No data",
+          },
+        ],
+        overallState: State.OTHER,
       });
     }
     for (let i = 0; i < props.statusHistory.length; i++) {
@@ -62,7 +72,8 @@ export const Line: Component<LineProps> = (props: LineProps) => {
           endTime: nextEntryStartTime || null,
           displayStartTime: startTime,
           displayEndTime: endTime,
-          status: entry.status,
+          statuses: entry.statuses,
+          overallState: entry.overallState,
         });
       }
     }
@@ -76,9 +87,9 @@ export const Line: Component<LineProps> = (props: LineProps) => {
     const durations: Partial<{[key in State]: number}> = {};
     let total = 0;
     for (const statusHistory of statusHistoryInRange()) {
-      if (statusHistory.status.state !== State.OTHER) {
-        durations[statusHistory.status.state] =
-          (durations[statusHistory.status.state] || 0) +
+      if (statusHistory.overallState !== State.OTHER) {
+        durations[statusHistory.overallState] =
+          (durations[statusHistory.overallState] || 0) +
           statusHistory.displayEndTime -
           statusHistory.displayStartTime;
         total += statusHistory.displayEndTime - statusHistory.displayStartTime;
@@ -125,8 +136,26 @@ export const Line: Component<LineProps> = (props: LineProps) => {
         <For each={statusHistoryInRange()}>
           {(entry, i) => {
             const basis = (entry.displayEndTime - entry.displayStartTime) * basisMultiplier();
-            const colour = getStatusColour(entry.status.state);
+            const colour = getStatusColour(entry.overallState);
             const [onPopoverShowHandler, setOnPopoverShowHandler] = createSignal<() => void>();
+            const collapsedStatuses = () => {
+              const result: RenderedLineStatus[] = [];
+              const resultsByReason: Map<string | null, RenderedLineStatus> = new Map();
+              for (const status of entry.statuses) {
+                if (resultsByReason.has(status.reason)) {
+                  const existingEntry = resultsByReason.get(status.reason)!;
+                  existingEntry.state.push(status.state);
+                } else {
+                  const renderedStatus: RenderedLineStatus = {
+                    state: [status.state],
+                    reason: status.reason,
+                  };
+                  resultsByReason.set(status.reason, renderedStatus);
+                  result.push(renderedStatus);
+                }
+              }
+              return result;
+            };
             return (
               <div
                 class="flex-grow flex-shrink h-2 hover:py-1 transition-all ease-linear box-content group/popover"
@@ -143,13 +172,19 @@ export const Line: Component<LineProps> = (props: LineProps) => {
                 <div class="relative w-full h-full hidden group-hover/popover:block">
                   <Popover setOnShowHandler={setOnPopoverShowHandler}>
                     <div class="text-sm flex flex-col space-y-1">
-                      <p class="font-semibold">{entry.status.state}</p>
-                      <Show when={entry.status.reason !== null}>
-                        <p>{entry.status.reason}</p>
-                      </Show>
-                      <p class="text-slate-500 text-xs">
-                        {renderTimeRange(entry.startTime, entry.endTime)}
-                      </p>
+                      <For each={collapsedStatuses()}>
+                        {(status) => (
+                          <>
+                            <p class="font-semibold">{status.state.join(" / ")}</p>
+                            <Show when={status.reason !== null}>
+                              <p>{status.reason}</p>
+                            </Show>
+                            <p class="text-slate-500 text-xs">
+                              {renderTimeRange(entry.startTime, entry.endTime)}
+                            </p>
+                          </>
+                        )}
+                      </For>
                     </div>
                   </Popover>
                 </div>

@@ -25,11 +25,16 @@ use time::{format_description, OffsetDateTime};
 extern crate rocket;
 
 #[derive(Debug, Clone, Serialize)]
+struct ApiLineStatus {
+    entries: Vec<ApiLineStatusEntry>,
+    from: SerializableDateTime,
+    to: Option<SerializableDateTime>,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 struct ApiLineStatusEntry {
     status: types::Status,
     reason: Option<String>,
-    from: SerializableDateTime,
-    to: Option<SerializableDateTime>,
 }
 
 #[derive(Debug, Clone)]
@@ -113,7 +118,7 @@ async fn history(
     store: &State<Arc<Store>>,
     from: SerializableDateTime,
     to: SerializableDateTime,
-) -> Json<HashMap<String, Vec<ApiLineStatusEntry>>> {
+) -> Json<HashMap<String, Vec<ApiLineStatus>>> {
     let status_history = store.get_status_history(from.into(), to.into()).await;
     let response = status_history
         .into_iter()
@@ -121,22 +126,27 @@ async fn history(
             let entries = entries
                 .into_iter()
                 .filter_map(|entry| {
-                    let parsed_entry = tfl::try_parse(&line, &entry.data)?;
-                    Some(ApiLineStatusEntry {
-                        status: parsed_entry.status,
-                        reason: parsed_entry.reason,
+                    let parsed_entries = tfl::try_parse(&line, &entry.data)?;
+                    Some(ApiLineStatus {
+                        entries: parsed_entries
+                            .into_iter()
+                            .map(|e| ApiLineStatusEntry {
+                                status: e.status,
+                                reason: e.reason,
+                            })
+                            .collect::<Vec<_>>(),
                         from: entry.start_time.into(),
                         to: entry.end_time.map(SerializableDateTime::from),
                     })
                 })
-                .fold(Vec::<ApiLineStatusEntry>::new(), |mut acc, entry| {
-                    if let Some(last_entry) = acc.last_mut() {
-                        if last_entry.status == entry.status && last_entry.reason == entry.reason {
-                            last_entry.to = entry.to;
+                .fold(Vec::<ApiLineStatus>::new(), |mut acc, status| {
+                    if let Some(last_status) = acc.last_mut() {
+                        if last_status.entries == status.entries {
+                            last_status.to = status.to;
                             return acc;
                         }
                     }
-                    acc.push(entry);
+                    acc.push(status);
                     acc
                 });
             (line, entries)
