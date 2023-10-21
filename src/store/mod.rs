@@ -4,25 +4,11 @@ mod sqlite;
 use std::sync::Arc;
 
 use rocket::request::FromRequest;
-use serde::Serialize;
-use serde_json::Value;
-use time::OffsetDateTime;
 
 pub use self::sqlite::SqliteConnection as StoreConnection;
 use self::sqlite::SqliteStore;
 
 pub use self::fairing::StoreFairing;
-
-#[derive(Debug, Clone, Serialize)]
-pub struct LineHistoryEntry {
-    pub start_time: OffsetDateTime,
-    pub end_time: Option<OffsetDateTime>,
-    pub data: Value,
-}
-
-pub trait UpdateChecker: Send + Sync {
-    fn should_update(&self, old: &Value, new: &Value) -> bool;
-}
 
 #[derive(Clone)]
 pub struct Store {

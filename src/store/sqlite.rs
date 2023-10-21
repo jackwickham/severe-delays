@@ -4,7 +4,7 @@ use serde_json::Value;
 use sqlx::{self, pool::PoolConnection, Acquire, Sqlite};
 use time::OffsetDateTime;
 
-use super::{LineHistoryEntry, UpdateChecker};
+use crate::types::LineHistoryEntry;
 
 #[derive(Debug, sqlx::FromRow)]
 struct SqliteHistoryEntry {
@@ -90,11 +90,10 @@ impl SqliteConnection {
         )
     }
 
-    pub async fn set_status<U: UpdateChecker>(
-        &mut self,
-        status_by_line: HashMap<String, Value>,
-        should_update: U,
-    ) {
+    pub async fn set_status<U>(&mut self, status_by_line: HashMap<String, Value>, should_update: U)
+    where
+        U: Fn(&Value, &Value) -> bool + Send + Sync,
+    {
         let mut txn = self.connection.begin().await.unwrap();
         let now = OffsetDateTime::now_utc();
         let existing =
@@ -107,7 +106,7 @@ impl SqliteConnection {
                 .collect::<HashMap<_, _>>();
         for (line, status) in status_by_line {
             if let Some(existing) = existing.get(&line) {
-                if !should_update.should_update(
+                if !should_update(
                     &serde_json::from_slice::<Value>(&existing).unwrap(),
                     &status,
                 ) {
