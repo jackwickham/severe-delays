@@ -1,11 +1,11 @@
 use std::collections::{HashMap, HashSet};
 
-use log::{info, warn};
+use log::{debug, warn};
 use rocket::tokio;
 use serde_json::Value;
 
 use super::api::Api;
-use crate::store::{AbstractStore, Store, UpdateChecker};
+use crate::store::{Store, StoreConnection, UpdateChecker};
 
 pub struct Tfl {
     api: Api,
@@ -20,20 +20,24 @@ impl Tfl {
         }
     }
 
-    pub async fn start_polling(&self, store: &Store) {
+    pub async fn start_polling(&self, store: Store) {
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(60));
         loop {
             interval.tick().await;
             let status = self.api.load_status().await;
             match status {
-                Ok(status) => self.update_status(store, status).await,
+                Ok(status) => {
+                    self.update_status(store.get_connection().await, status)
+                        .await
+                }
                 Err(err) => warn!("Error reloading TFL status: {:?}", err),
             }
         }
     }
 
-    async fn update_status(&self, store: &Store, status: HashMap<String, Value>) {
+    async fn update_status(&self, mut store: StoreConnection, status: HashMap<String, Value>) {
         store.set_status(status, TflUpdateChecker()).await;
+        debug!("Updated status");
     }
 }
 

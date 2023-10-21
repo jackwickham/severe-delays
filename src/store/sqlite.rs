@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use serde_json::Value;
-use sqlx;
+use sqlx::{self, pool::PoolConnection, Acquire, Sqlite};
 use time::OffsetDateTime;
 
-use super::{AbstractStore, LineHistoryEntry, UpdateChecker};
+use super::{LineHistoryEntry, UpdateChecker};
 
 #[derive(Debug, sqlx::FromRow)]
 struct SqliteHistoryEntry {
@@ -42,12 +42,21 @@ impl SqliteStore {
     pub async fn shutdown(&self) {
         self.pool.close().await;
     }
+
+    pub async fn get_connection(&self) -> SqliteConnection {
+        SqliteConnection {
+            connection: self.pool.acquire().await.unwrap(),
+        }
+    }
 }
 
-#[async_trait]
-impl AbstractStore for SqliteStore {
-    async fn get_status_history<'a>(
-        &'a self,
+pub struct SqliteConnection {
+    connection: PoolConnection<Sqlite>,
+}
+
+impl SqliteConnection {
+    pub async fn get_status_history(
+        &mut self,
         start_time: OffsetDateTime,
         end_time: OffsetDateTime,
     ) -> HashMap<String, Vec<LineHistoryEntry>> {
@@ -56,7 +65,7 @@ impl AbstractStore for SqliteStore {
         )
         .bind(end_time.unix_timestamp())
         .bind(start_time.unix_timestamp())
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *self.connection)
         .await
         .unwrap()
         .into_iter()
@@ -81,15 +90,16 @@ impl AbstractStore for SqliteStore {
         )
     }
 
-    async fn set_status<U: UpdateChecker>(
-        &self,
+    pub async fn set_status<U: UpdateChecker>(
+        &mut self,
         status_by_line: HashMap<String, Value>,
         should_update: U,
     ) {
+        let mut txn = self.connection.begin().await.unwrap();
         let now = OffsetDateTime::now_utc();
         let existing =
             sqlx::query_as::<_, SqliteHistoryEntry>("SELECT * FROM history WHERE end_time IS NULL")
-                .fetch_all(&self.pool)
+                .fetch_all(&mut *txn)
                 .await
                 .unwrap()
                 .into_iter()
@@ -110,7 +120,7 @@ impl AbstractStore for SqliteStore {
                 sqlx::query("UPDATE history SET end_time = ? WHERE line = ? AND end_time IS NULL")
                     .bind(OffsetDateTime::now_utc().unix_timestamp())
                     .bind(&line)
-                    .execute(&self.pool)
+                    .execute(&mut *txn)
                     .await
                     .unwrap();
             } else {
@@ -122,9 +132,10 @@ impl AbstractStore for SqliteStore {
             .bind(&line)
             .bind(now.unix_timestamp())
             .bind(serde_json::to_vec(&status).unwrap())
-            .execute(&self.pool)
+            .execute(&mut *txn)
             .await
             .unwrap();
         }
+        txn.commit().await.unwrap();
     }
 }

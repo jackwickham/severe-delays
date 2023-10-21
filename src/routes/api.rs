@@ -1,15 +1,12 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 use rocket::form::FromFormField;
-use rocket::{serde::json::Json, Route, State};
+use rocket::{serde::json::Json, Route};
 use serde::Serialize;
 use time::{format_description, OffsetDateTime};
 
-use crate::{
-    store::{AbstractStore, Store},
-    tfl,
-    types::Status,
-};
+use crate::store::StoreConnection;
+use crate::{tfl, types::Status};
 
 pub fn get_routes() -> Vec<Route> {
     routes![history]
@@ -67,7 +64,7 @@ impl Into<OffsetDateTime> for SerializableDateTime {
 
 #[get("/v1/history?<from>&<to>")]
 async fn history(
-    store: &State<Arc<Store>>,
+    mut store: StoreConnection,
     from: SerializableDateTime,
     to: SerializableDateTime,
 ) -> Json<HashMap<String, Vec<ApiLineStatus>>> {

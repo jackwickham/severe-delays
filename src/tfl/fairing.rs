@@ -27,9 +27,9 @@ impl Fairing for TflFairing {
 
     async fn on_liftoff(&self, rocket: &Rocket<Orbit>) {
         let tfl = self.tfl.clone();
-        let store = rocket.state::<Arc<Store>>().unwrap().clone();
+        let store = rocket.state::<Store>().unwrap().clone();
         spawn(async move {
-            tfl.as_ref().start_polling(store.as_ref()).await;
+            tfl.as_ref().start_polling(store).await;
         });
     }
 }

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use rocket::{
     fairing::{Fairing, Info, Kind},
     Rocket,
@@ -26,11 +24,11 @@ impl Fairing for StoreFairing {
 
     async fn on_ignite(&self, rocket: Rocket<rocket::Build>) -> rocket::fairing::Result {
         let store = Store::new().await;
-        Ok(rocket.manage(Arc::new(store)))
+        Ok(rocket.manage(store))
     }
 
     async fn on_shutdown(&self, rocket: &Rocket<rocket::Orbit>) {
-        if let Some(store) = rocket.state::<Arc<Store>>() {
+        if let Some(store) = rocket.state::<Store>() {
             store.shutdown().await;
         }
     }

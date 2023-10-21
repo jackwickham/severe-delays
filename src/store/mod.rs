@@ -1,19 +1,17 @@
 mod fairing;
-mod memory;
 mod sqlite;
 
-use std::collections::HashMap;
+use std::sync::Arc;
 
-use async_trait::async_trait;
+use rocket::request::FromRequest;
 use serde::Serialize;
 use serde_json::Value;
 use time::OffsetDateTime;
 
-use self::{memory::MemoryStore, sqlite::SqliteStore};
+pub use self::sqlite::SqliteConnection as StoreConnection;
+use self::sqlite::SqliteStore;
 
 pub use self::fairing::StoreFairing;
-
-pub type Store = SqliteStore;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct LineHistoryEntry {
@@ -22,25 +20,39 @@ pub struct LineHistoryEntry {
     pub data: Value,
 }
 
-#[async_trait]
-pub trait AbstractStore {
-    async fn get_status_history<'a>(
-        &'a self,
-        start_time: OffsetDateTime,
-        end_time: OffsetDateTime,
-    ) -> HashMap<String, Vec<LineHistoryEntry>>;
-
-    async fn set_status<U: UpdateChecker>(
-        &self,
-        status_by_line: HashMap<String, Value>,
-        should_update: U,
-    );
-}
-
 pub trait UpdateChecker: Send + Sync {
     fn should_update(&self, old: &Value, new: &Value) -> bool;
 }
 
-pub async fn create_store() -> Store {
-    SqliteStore::new().await
+#[derive(Clone)]
+pub struct Store {
+    inner: Arc<SqliteStore>,
+}
+
+impl Store {
+    pub async fn new() -> Self {
+        let inner = Arc::new(SqliteStore::new().await);
+        Store { inner }
+    }
+
+    pub async fn shutdown(&self) {
+        self.inner.shutdown().await;
+    }
+
+    pub async fn get_connection(&self) -> StoreConnection {
+        self.inner.get_connection().await
+    }
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for StoreConnection {
+    type Error = ();
+
+    async fn from_request(
+        request: &'r rocket::Request<'_>,
+    ) -> rocket::request::Outcome<Self, Self::Error> {
+        let store = request.rocket().state::<Store>().unwrap();
+        let conn = store.get_connection().await;
+        rocket::request::Outcome::Success(conn)
+    }
 }
