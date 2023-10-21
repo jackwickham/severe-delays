@@ -67,8 +67,14 @@ async fn history(
     mut store: StoreConnection,
     from: SerializableDateTime,
     to: SerializableDateTime,
-) -> Json<HashMap<String, Vec<ApiLineStatus>>> {
-    let status_history = store.get_status_history(from.into(), to.into()).await;
+) -> Result<Json<HashMap<String, Vec<ApiLineStatus>>>, rocket::http::Status> {
+    let status_history = store
+        .get_status_history(from.into(), to.into())
+        .await
+        .map_err(|e| {
+            error!("Error getting status history: {:?}", e);
+            rocket::http::Status::InternalServerError
+        })?;
     let response = status_history
         .into_iter()
         .map(|(line, entries)| {
@@ -101,5 +107,5 @@ async fn history(
             (line, entries)
         })
         .collect::<HashMap<_, _>>();
-    Json(response)
+    Ok(Json(response))
 }

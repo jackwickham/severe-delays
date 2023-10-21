@@ -1,5 +1,5 @@
 use rocket::{
-    fairing::{Fairing, Info, Kind},
+    fairing::{Fairing, Info, Kind, Result},
     Rocket,
 };
 
@@ -22,9 +22,14 @@ impl Fairing for StoreFairing {
         }
     }
 
-    async fn on_ignite(&self, rocket: Rocket<rocket::Build>) -> rocket::fairing::Result {
-        let store = Store::new().await;
-        Ok(rocket.manage(store))
+    async fn on_ignite(&self, rocket: Rocket<rocket::Build>) -> Result {
+        match Store::new().await {
+            Ok(store) => Ok(rocket.manage(store)),
+            Err(e) => {
+                log::error!("Failed to initialize store: {:?}", e);
+                Err(rocket)
+            }
+        }
     }
 
     async fn on_shutdown(&self, rocket: &Rocket<rocket::Orbit>) {

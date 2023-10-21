@@ -1,11 +1,11 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use log::{debug, warn};
 use rocket::tokio;
 use serde_json::Value;
 
-use super::api::Api;
-use crate::store::{Store, StoreConnection};
+use super::api::{Api, ApiError};
+use crate::store::{ConnectionError, SetStatusError, Store};
 
 pub struct Tfl {
     api: Api,
@@ -20,24 +20,31 @@ impl Tfl {
         }
     }
 
-    pub async fn start_polling(&self, store: Store) {
+    pub async fn start_polling(&self, mut store: Store) {
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(60));
         loop {
             interval.tick().await;
-            let status = self.api.load_status().await;
-            match status {
-                Ok(status) => {
-                    self.update_status(store.get_connection().await, status)
-                        .await
+            match self.update_status(&mut store).await {
+                Ok(()) => debug!("Updated TFL status"),
+                Err(PollError::ApiError(err)) => warn!("Error reloading TFL status: {:?}", err),
+                Err(PollError::ConnectionError(err)) => {
+                    warn!(
+                        "Failed to acquire DB connection while reloading TFL status: {:?}",
+                        err
+                    )
                 }
-                Err(err) => warn!("Error reloading TFL status: {:?}", err),
+                Err(PollError::SetStatusError(err)) => {
+                    warn!("Failed to set TFL status in DB: {:?}", err)
+                }
             }
         }
     }
 
-    async fn update_status(&self, mut store: StoreConnection, status: HashMap<String, Value>) {
-        store.set_status(status, should_update).await;
-        debug!("Updated status");
+    async fn update_status(&self, store: &mut Store) -> Result<(), PollError> {
+        let status = self.api.load_status().await?;
+        let mut connection = store.get_connection().await?;
+        connection.set_status(status, should_update).await?;
+        Ok(())
     }
 }
 
@@ -69,5 +76,30 @@ fn should_update(old: &Value, new: &Value) -> bool {
                 .any(|(old, new)| should_update(old, new))
         }
         (old, new) => old != new,
+    }
+}
+
+#[derive(Debug)]
+enum PollError {
+    ApiError(ApiError),
+    ConnectionError(ConnectionError),
+    SetStatusError(SetStatusError),
+}
+
+impl From<ApiError> for PollError {
+    fn from(err: ApiError) -> Self {
+        PollError::ApiError(err)
+    }
+}
+
+impl From<ConnectionError> for PollError {
+    fn from(err: ConnectionError) -> Self {
+        PollError::ConnectionError(err)
+    }
+}
+
+impl From<SetStatusError> for PollError {
+    fn from(err: SetStatusError) -> Self {
+        PollError::SetStatusError(err)
     }
 }

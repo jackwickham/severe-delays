@@ -1620,6 +1620,7 @@ name = "severe-delays"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "itertools",
  "log",
  "reqwest",
  "rocket",
