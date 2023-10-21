@@ -13,6 +13,9 @@ pub struct Api {
 
 impl Api {
     pub fn new(api_key: Option<String>) -> Self {
+        if api_key.is_none() {
+            log::warn!("No TFL API key provided");
+        }
         Api {
             client: reqwest::Client::new(),
             api_key,

@@ -1,18 +1,16 @@
-use std::sync::Arc;
-
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::tokio::spawn;
 use rocket::{Orbit, Rocket};
 
 use crate::store::Store;
 
-pub struct TflFairing {
-    tfl: Arc<crate::tfl::Tfl>,
-}
+use super::Tfl;
+
+pub struct TflFairing();
 
 impl TflFairing {
-    pub fn new(tfl: Arc<crate::tfl::Tfl>) -> Self {
-        TflFairing { tfl }
+    pub fn new() -> Self {
+        TflFairing()
     }
 }
 
@@ -26,10 +24,11 @@ impl Fairing for TflFairing {
     }
 
     async fn on_liftoff(&self, rocket: &Rocket<Orbit>) {
-        let tfl = self.tfl.clone();
+        let config = rocket.state::<crate::config::Config>().unwrap();
+        let tfl = Tfl::new(config.tfl_api_key.clone());
         let store = rocket.state::<Store>().unwrap().clone();
         spawn(async move {
-            tfl.as_ref().start_polling(store).await;
+            tfl.start_polling(store).await;
         });
     }
 }
