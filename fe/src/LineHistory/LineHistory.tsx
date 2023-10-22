@@ -107,7 +107,7 @@ export const LineHistory: Component = () => {
   let [settingsStore, setSettingsStore] = createSettingsStore();
   return (
     <>
-      <div class="flex flex-row justify-end space-x-4 text-sm mb-2">
+      <div class="flex flex-row justify-end space-x-4 text-sm mb-4">
         <Settings store={settingsStore} setStore={setSettingsStore} />
         <SplitButton
           buttons={[

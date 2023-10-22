@@ -120,7 +120,7 @@ export const Line: Component<LineProps> = (props: LineProps) => {
 
   return (
     <div>
-      <h2 class="text-2xl mb-3">
+      <h2 class="text-2xl mb-2">
         <Show when={props.color}>
           <div
             class="inline-block w-4 h-4 rounded-full mr-2"

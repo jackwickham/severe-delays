@@ -5,8 +5,9 @@ const App: Component = () => {
   return (
     <div class="">
       <header class="bg-slate-800 text-slate-100 h-12 w-full flex flex-row items-center justify-center text-lg">
-        <div class="max-w-7xl w-full p-4">
-          <div class="flex flex-row justify-between">
+        <div class="max-w-7xl w-full px-3">
+          <div class="flex flex-row justify-between items-center">
+            <img src="/src/assets/logo-64.png" class="inline h-5 mr-2" />
             <p class="grow">Severe Delays</p>
           </div>
         </div>
