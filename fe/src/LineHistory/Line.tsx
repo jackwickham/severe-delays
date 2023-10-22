@@ -95,7 +95,8 @@ export const Line: Component<LineProps> = (props: LineProps) => {
           statusHistory.overallState !== State.SERVICE_CLOSED) &&
         (props.settings.includePlannedClosuresInStats ||
           (statusHistory.overallState !== State.PLANNED_CLOSURE &&
-            statusHistory.overallState !== State.PART_CLOSURE))
+            statusHistory.overallState !== State.PART_CLOSURE &&
+            statusHistory.overallState !== State.REDUCED_SERVICE))
       ) {
         durations[statusHistory.overallState] =
           (durations[statusHistory.overallState] || 0) +
@@ -141,7 +142,7 @@ export const Line: Component<LineProps> = (props: LineProps) => {
           )}
         </For>
       </div>
-      <div class="flex flex-row items-center bg-slate-300 h-2 rounded">
+      <div class="flex flex-row items-center bg-slate-300 h-3 rounded">
         <For each={statusHistoryInRange()}>
           {(entry, i) => {
             const basis = (entry.displayEndTime - entry.displayStartTime) * basisMultiplier();
@@ -167,7 +168,7 @@ export const Line: Component<LineProps> = (props: LineProps) => {
             };
             return (
               <div
-                class="flex-grow flex-shrink h-2 hover:py-1 transition-all ease-linear box-content group/popover"
+                class="flex-grow flex-shrink h-full hover:py-1 transition-all ease-linear box-content group/popover"
                 classList={{
                   [colour]: true,
                   "rounded-l": i() === 0,
@@ -223,7 +224,7 @@ const getStatusColour = (state: State): string => {
     case State.PLANNED_CLOSURE:
       return "bg-red-400";
     case State.REDUCED_SERVICE:
-      return "bg-yellow-500";
+      return "bg-blue-400";
     case State.OTHER:
     case State.SERVICE_CLOSED:
     default:

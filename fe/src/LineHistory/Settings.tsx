@@ -34,7 +34,7 @@ export const Settings: Component<SettingsProps> = (props) => {
   });
 
   return (
-    <div ref={settingsButtonContainer}>
+    <div ref={settingsButtonContainer} class="relative">
       <Button onClick={() => setSettingsOpen(!settingsOpen())}>
         <span
           innerHTML={feather.icons.settings.toSvg({
@@ -43,7 +43,7 @@ export const Settings: Component<SettingsProps> = (props) => {
         />
       </Button>
       <div
-        class="relative w-full h-full"
+        class="absolute w-full h-full top-0"
         classList={{
           hidden: !settingsOpen(),
         }}
@@ -99,5 +99,5 @@ const SettingsPopoverContent: Component<SettingsProps> = (props) => {
 export const createSettingsStore = () =>
   createStore<Settings>({
     includeClosedInStats: true,
-    includePlannedClosuresInStats: false,
+    includePlannedClosuresInStats: true,
   });
