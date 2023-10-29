@@ -1,8 +1,8 @@
 import {For, type Component, createResource, createSignal, createEffect} from "solid-js";
-import {HistoryEntry, Line} from "./Line";
+import {type HistoryEntry, Line} from "./Line";
 import {State} from "./types";
 import {loadStatuses} from "../api/api";
-import {Status} from "../api/types";
+import {type Status} from "../api/types";
 import {Button} from "../components/Button";
 import {SplitButton} from "../components/SplitButton";
 import feather from "feather-icons";

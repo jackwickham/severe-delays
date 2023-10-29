@@ -1,5 +1,5 @@
-import {Component, createEffect, createSignal} from "solid-js";
-import {SetStoreFunction, Store, createStore} from "solid-js/store";
+import {type Component, createEffect, createSignal} from "solid-js";
+import {type SetStoreFunction, type Store, createStore} from "solid-js/store";
 import {Button} from "../components/Button";
 import {Popover} from "../Popover";
 import feather from "feather-icons";

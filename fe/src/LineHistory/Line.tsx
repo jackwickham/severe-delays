@@ -1,7 +1,8 @@
-import {For, type Component, createMemo, Show, createSignal} from "solid-js";
-import {LineStatus, State} from "./types";
+import {For, type Component, createMemo, Show, createSignal, createEffect} from "solid-js";
+import {type LineStatus, State} from "./types";
 import {Popover} from "../Popover";
 import {Settings} from "./Settings";
+import {clickOutside} from "../directives/clickOutside";
 
 export interface HistoryEntry {
   startTime: Date;
@@ -147,6 +148,7 @@ export const Line: Component<LineProps> = (props: LineProps) => {
           {(entry, i) => {
             const basis = (entry.displayEndTime - entry.displayStartTime) * basisMultiplier();
             const colour = getStatusColour(entry.overallState);
+            const [stickyPopoverShowing, setStickyPopoverShowing] = createSignal(false);
             const [onPopoverShowHandler, setOnPopoverShowHandler] = createSignal<() => void>();
             const collapsedStatuses = () => {
               const result: RenderedLineStatus[] = [];
@@ -166,6 +168,11 @@ export const Line: Component<LineProps> = (props: LineProps) => {
               }
               return result;
             };
+            createEffect(() => {
+              if (stickyPopoverShowing()) {
+                onPopoverShowHandler()?.();
+              }
+            });
             return (
               <div
                 class="flex-grow flex-shrink h-full hover:py-1 transition-all ease-linear box-content group/popover"
@@ -173,13 +180,23 @@ export const Line: Component<LineProps> = (props: LineProps) => {
                   [colour]: true,
                   "rounded-l": i() === 0,
                   "rounded-r": i() === statusHistoryInRange().length - 1,
+                  "py-1": stickyPopoverShowing(),
                 }}
                 style={{
                   "flex-basis": `${basis}px`,
                 }}
                 onMouseOver={() => onPopoverShowHandler()?.()}
+                onClick={() => setStickyPopoverShowing(true)}
+                use:clickOutside={() => setStickyPopoverShowing(false)}
               >
-                <div class="relative w-full h-full hidden group-hover/popover:block">
+                <div
+                  class="relative w-full h-full"
+                  classList={{
+                    hidden: !stickyPopoverShowing(),
+                    "group-hover/popover:block": !stickyPopoverShowing(),
+                    block: stickyPopoverShowing(),
+                  }}
+                >
                   <Popover setOnShowHandler={setOnPopoverShowHandler}>
                     <div class="text-sm flex flex-col space-y-1">
                       <For each={collapsedStatuses()}>

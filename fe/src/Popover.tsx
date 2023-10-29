@@ -1,4 +1,4 @@
-import {JSX, type Component, createSignal} from "solid-js";
+import {type JSX, type Component, createSignal} from "solid-js";
 
 export interface TooltipProps {
   children: JSX.Element;
@@ -7,7 +7,8 @@ export interface TooltipProps {
   setOnShowHandler: (handler: () => void) => void;
 }
 
-const PADDING = 4;
+const PADDING_X = 4;
+const PADDING_Y = 8;
 
 export const Popover: Component<TooltipProps> = (props: TooltipProps) => {
   const [style, setStyle] = createSignal<JSX.CSSProperties>({});
@@ -18,14 +19,14 @@ export const Popover: Component<TooltipProps> = (props: TooltipProps) => {
 
   const update = () => {
     const popoverRect = popoverElem!.getBoundingClientRect();
-    const containerRect = containerElem!.getBoundingClientRect();
+    const containerRect = containerElem!.parentElement!.getBoundingClientRect();
     const barCenter = (containerRect.left + containerRect.right) / 2;
 
     let s: JSX.CSSProperties = {
-      "max-width": `calc(100vw - ${PADDING}px)`,
+      "max-width": `calc(100vw - ${PADDING_X}px)`,
     };
-    let attachLeft = `-${containerRect.left - PADDING}px`;
-    let attachRight = `-${window.innerWidth - containerRect.right - PADDING}px`;
+    let attachLeft = `-${containerRect.left - PADDING_X}px`;
+    let attachRight = `-${window.innerWidth - containerRect.right - PADDING_X}px`;
 
     if (window.innerWidth <= popoverRect.width) {
       s.left = attachLeft;
@@ -43,7 +44,7 @@ export const Popover: Component<TooltipProps> = (props: TooltipProps) => {
       s["justify-content"] = "space-around";
     }
 
-    if (containerRect.bottom + popoverRect.height + PADDING > window.innerHeight) {
+    if (containerRect.bottom + popoverRect.height + PADDING_Y > window.innerHeight) {
       setBottom(false);
       s.bottom = "0px";
     } else {
@@ -70,6 +71,10 @@ export const Popover: Component<TooltipProps> = (props: TooltipProps) => {
         classList={{
           "items-end": bottom(),
           "items-start": !bottom(),
+        }}
+        style={{
+          width: "calc(100% + 1rem)",
+          transform: "translateX(-0.5rem)",
         }}
       >
         <div
