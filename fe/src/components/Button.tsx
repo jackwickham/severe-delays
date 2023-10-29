@@ -5,6 +5,7 @@ export interface ButtonProps {
   active?: boolean;
   class?: string;
   rounded?: boolean;
+  padded?: boolean;
   onClick: () => void;
 }
 
@@ -17,6 +18,8 @@ export const Button: Component<ButtonProps> = (props: ButtonProps) => {
         "bg-slate-100": !props.active,
         "text-slate-100": props.active,
         "rounded-md": props.rounded !== false,
+        "px-2": props.padded !== false,
+        "py-1": props.padded !== false,
       }}
       onClick={props.onClick}
     >

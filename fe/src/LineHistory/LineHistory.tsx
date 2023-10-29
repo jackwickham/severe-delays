@@ -145,7 +145,7 @@ export const LineHistory: Component = () => {
             : "Refresh"}
         </Button>
       </div>
-      <div class="space-y-10 mb-20">
+      <div class="space-y-6 mb-20">
         <For each={lines()}>
           {(line) => (
             <Line

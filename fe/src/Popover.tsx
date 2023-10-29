@@ -59,7 +59,7 @@ export const Popover: Component<TooltipProps> = (props: TooltipProps) => {
 
   return (
     <div
-      class="absolute w-full h-0"
+      class="absolute w-full h-0 drop-shadow-lg"
       classList={{
         "-bottom-0.5": bottom(),
         "-top-0.5": !bottom(),
@@ -78,7 +78,7 @@ export const Popover: Component<TooltipProps> = (props: TooltipProps) => {
         }}
       >
         <div
-          class="relative w-3 h-3 bg-white shadow-lg transform rotate-45"
+          class="relative w-3 h-3 bg-white transform rotate-45"
           classList={{
             "top-1.5": bottom(),
             "-top-1.5": !bottom(),
@@ -87,7 +87,7 @@ export const Popover: Component<TooltipProps> = (props: TooltipProps) => {
       </div>
       <div class={`absolute w-80 rounded flex flex-row ${props.class || ""}`} style={style()}>
         <div
-          class="bg-white shadow-lg rounded max-w-fit min-w-4 p-2 max-h-[30rem] overflow-y-auto"
+          class="bg-white rounded max-w-fit min-w-4 p-2 max-h-[30rem] overflow-y-auto"
           ref={popoverElem}
         >
           {props.children}
