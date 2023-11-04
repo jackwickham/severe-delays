@@ -2,7 +2,7 @@ import {For, type Component, createResource, createSignal, createEffect} from "s
 import {type HistoryEntry, Line} from "./Line";
 import {State} from "./types";
 import {loadStatuses} from "../api/api";
-import {type Status} from "../api/types";
+import {type LineStatusEntry, type Status} from "../api/types";
 import {Button} from "../components/Button";
 import {SplitButton} from "../components/SplitButton";
 import feather from "feather-icons";
@@ -74,6 +74,7 @@ export const LineHistory: Component = () => {
     displayRange,
     async (range) => await loadStatuses(range.start, range.end)
   );
+  const [settingsStore, setSettingsStore] = createSettingsStore();
   const lines = () => {
     if (apiResponse.error) {
       return [];
@@ -95,7 +96,7 @@ export const LineHistory: Component = () => {
             state: mapState(entry.status),
             reason: entry.reason || null,
           })),
-          overallState: mapState(status.entries[0]?.status),
+          overallState: getOverallState(status.entries, settingsStore),
         })),
         color: lineColors[lineId],
         name: lineId,
@@ -104,7 +105,6 @@ export const LineHistory: Component = () => {
     result.sort((a, b) => a.name.localeCompare(b.name));
     return result;
   };
-  let [settingsStore, setSettingsStore] = createSettingsStore();
   return (
     <>
       <div class="flex flex-row justify-end space-x-4 text-sm mb-4">
@@ -153,7 +153,6 @@ export const LineHistory: Component = () => {
               statusHistory={line.statusHistory}
               color={line.color}
               displayRange={displayRange()}
-              settings={settingsStore}
             />
           )}
         </For>
@@ -185,4 +184,27 @@ const mapState = (state: Status | undefined): State => {
     default:
       return State.OTHER;
   }
+};
+
+const getOverallState = (entries: LineStatusEntry[], settingsStore: Settings): State => {
+  let fallback = State.OTHER;
+  for (let entry of entries) {
+    let state = mapState(entry.status);
+    if (!settingsStore.includeClosedInStats && state === State.SERVICE_CLOSED) {
+      continue;
+    }
+    if (!settingsStore.includePlannedClosuresInStats && state === State.PLANNED_CLOSURE) {
+      continue;
+    }
+    if (
+      !settingsStore.includePlannedClosuresInStats &&
+      (state === State.PART_CLOSURE || state === State.REDUCED_SERVICE)
+    ) {
+      // Only part closure, so we should fall back to good service for the rest of the line
+      fallback = State.GOOD_SERVICE;
+      continue;
+    }
+    return mapState(entry.status);
+  }
+  return fallback;
 };

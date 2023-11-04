@@ -1,4 +1,4 @@
-import {ApiResponse} from "./types";
+import type {ApiResponse} from "./types";
 
 export const loadStatuses = async (from: Date, to: Date): Promise<ApiResponse> => {
   const base = localStorage.getItem("apiBaseUri") || "";

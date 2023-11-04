@@ -8,7 +8,6 @@ export enum State {
   PART_CLOSURE = "Part closure",
   SERVICE_CLOSED = "Service closed",
   REDUCED_SERVICE = "Reduced service",
-  CLOSED = "Closed",
   OTHER = "Other",
 }
 

@@ -1,17 +1,7 @@
-import {
-  For,
-  type Component,
-  createMemo,
-  Show,
-  createSignal,
-  createEffect,
-  createRenderEffect,
-  onMount,
-} from "solid-js";
+import {For, type Component, createMemo, Show, createSignal, onMount} from "solid-js";
 import {type LineStatus, State} from "./types";
 import {Popover} from "../Popover";
 import {Settings} from "./Settings";
-import {clickOutside} from "../directives/clickOutside";
 import {Button} from "../components/Button";
 import feather from "feather-icons";
 
@@ -33,7 +23,6 @@ export interface LineProps {
     g: number;
     b: number;
   };
-  settings: Settings;
 }
 
 interface RenderedHistoryEntry {
@@ -101,15 +90,7 @@ export const Line: Component<LineProps> = (props: LineProps) => {
     const durations: Partial<{[key in State]: number}> = {};
     let total = 0;
     for (const statusHistory of statusHistoryInRange()) {
-      if (
-        statusHistory.overallState !== State.OTHER &&
-        (props.settings.includeClosedInStats ||
-          statusHistory.overallState !== State.SERVICE_CLOSED) &&
-        (props.settings.includePlannedClosuresInStats ||
-          (statusHistory.overallState !== State.PLANNED_CLOSURE &&
-            statusHistory.overallState !== State.PART_CLOSURE &&
-            statusHistory.overallState !== State.REDUCED_SERVICE))
-      ) {
+      if (statusHistory.overallState !== State.OTHER) {
         durations[statusHistory.overallState] =
           (durations[statusHistory.overallState] || 0) +
           statusHistory.displayEndTime -
@@ -130,10 +111,27 @@ export const Line: Component<LineProps> = (props: LineProps) => {
     return results;
   });
 
+  let headerElem: HTMLDivElement | undefined;
+  let containerElem: HTMLDivElement | undefined;
   const [historyShowing, setHistoryShowing] = createSignal(false);
+  const toggleHistoryShowing = () => {
+    if (!historyShowing()) {
+      setHistoryShowing(true);
+    } else {
+      const currentTop = headerElem!.getBoundingClientRect().top;
+      if (currentTop <= 0) {
+        const containerTop = containerElem!.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({
+          top: containerTop - currentTop,
+          behavior: "instant",
+        });
+      }
+      setHistoryShowing(false);
+    }
+  };
 
   return (
-    <div>
+    <div ref={containerElem}>
       <div
         class="bg-page-background py-2"
         classList={{
@@ -141,6 +139,7 @@ export const Line: Component<LineProps> = (props: LineProps) => {
           "top-0": historyShowing(),
           "z-20": historyShowing(),
         }}
+        ref={headerElem}
       >
         <div class="flex flex-row justify-between items-center">
           <div>
@@ -174,7 +173,7 @@ export const Line: Component<LineProps> = (props: LineProps) => {
               rounded={false}
               padded={false}
               class="rounded-full w-8 h-8 p-0"
-              onClick={() => setHistoryShowing(!historyShowing())}
+              onClick={toggleHistoryShowing}
             >
               <div
                 class="flex justify-around"
@@ -190,14 +189,8 @@ export const Line: Component<LineProps> = (props: LineProps) => {
             {(entry, i) => {
               const basis = (entry.displayEndTime - entry.displayStartTime) * basisMultiplier();
               const colour = getStatusColour(entry.overallState);
-              const [stickyPopoverShowing, setStickyPopoverShowing] = createSignal(false);
               const [onPopoverShowHandler, setOnPopoverShowHandler] = createSignal<() => void>();
               const collapsedStatuses = () => collapseStatuses(entry.statuses);
-              createEffect(() => {
-                if (stickyPopoverShowing()) {
-                  onPopoverShowHandler()?.();
-                }
-              });
               return (
                 <div
                   class="flex-grow flex-shrink h-full hover:py-1 transition-all ease-linear box-content group/popover"
@@ -205,23 +198,13 @@ export const Line: Component<LineProps> = (props: LineProps) => {
                     [colour]: true,
                     "rounded-l": i() === 0,
                     "rounded-r": i() === statusHistoryInRange().length - 1,
-                    "py-1": stickyPopoverShowing(),
                   }}
                   style={{
                     "flex-basis": `${basis}px`,
                   }}
                   onMouseOver={() => onPopoverShowHandler()?.()}
-                  onClick={() => setStickyPopoverShowing(true)}
-                  use:clickOutside={() => setStickyPopoverShowing(false)}
                 >
-                  <div
-                    class="relative w-full h-full z-50"
-                    classList={{
-                      hidden: !stickyPopoverShowing(),
-                      "group-hover/popover:block": !stickyPopoverShowing(),
-                      block: stickyPopoverShowing(),
-                    }}
-                  >
+                  <div class="relative w-full h-full z-50 hidden group-hover/popover:block">
                     <Popover setOnShowHandler={setOnPopoverShowHandler}>
                       <div class="text-sm flex flex-col space-y-1">
                         <For each={collapsedStatuses()}>
