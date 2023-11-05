@@ -214,12 +214,12 @@ export const Line: Component<LineProps> = (props: LineProps) => {
                               <Show when={status.reason !== null}>
                                 <p>{status.reason}</p>
                               </Show>
-                              <p class="text-slate-500 text-xs">
-                                {renderTimeRange(entry.startTime, entry.endTime)}
-                              </p>
                             </>
                           )}
                         </For>
+                        <p class="text-slate-500 text-xs">
+                          {renderTimeRange(entry.startTime, entry.endTime)}
+                        </p>
                       </div>
                     </Popover>
                   </div>
@@ -313,7 +313,7 @@ const renderTimeRange = (startTime: Date | null, endTime: Date | null) => {
     return `Until ${endTime!.toLocaleString()}`;
   }
   if (endTime === null) {
-    return `Since ${startTime.toLocaleString()}`;
+    return `Since ${startTime.toLocaleString()} (${renderShortDuration(startTime, new Date())})`;
   }
   // Render the date once if the start and end times are on the same day
   if (startTime.toLocaleDateString() === endTime.toLocaleDateString()) {
