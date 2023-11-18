@@ -44,7 +44,7 @@ impl<'r> FromRequest<'r> for StoreConnection {
         match store.get_connection().await {
             Ok(conn) => rocket::request::Outcome::Success(conn),
             Err(e) => {
-                rocket::request::Outcome::Failure((rocket::http::Status::InternalServerError, e))
+                rocket::request::Outcome::Error((rocket::http::Status::InternalServerError, e))
             }
         }
     }
