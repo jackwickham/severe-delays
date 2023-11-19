@@ -297,4 +297,4 @@ const parseStation = (stationName: string, stations: Stations): string | null =>
 };
 
 const normalizeName = (stationName: string) =>
-  stationName.toLowerCase().replace("'", "").replace("-", " ").trim();
+  stationName.toLowerCase().replace(/s?'s?/, "").replace("-", " ").trim();
