@@ -3,6 +3,7 @@ import {LineHistory} from "./LineHistory";
 import logo from "./assets/logo-64.png";
 import {Route, Routes} from "@solidjs/router";
 import {LiveLineView} from "./LiveLineView";
+import {NotFound} from "./NotFound";
 
 const App: Component = () => {
   return (
@@ -19,6 +20,7 @@ const App: Component = () => {
         <Routes>
           <Route path="/" component={LineHistory} />
           <Route path="/live/:line" component={LiveLineView} />
+          <Route path="*" component={NotFound} />
         </Routes>
       </div>
     </div>

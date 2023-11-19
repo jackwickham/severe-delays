@@ -29,14 +29,22 @@ interface TflArrivalApiResponse {
 export const LiveLineView: Component = () => {
   const routeParams = useParams();
   const line = routeParams.line;
-  const [routeApiResponse] = createResource(async (): Promise<TflRouteApiResponse> => {
+  const [routeApiResponse] = createResource(async (): Promise<TflRouteApiResponse | null> => {
     const resp = await fetch(`https://api.tfl.gov.uk/Line/${line}/Route/Sequence/outbound`);
+    if (resp.status >= 400) {
+      return null;
+    }
     return await resp.json();
   });
-  const [arrivalsApiResponse] = createResource(async (): Promise<TflArrivalApiResponse[]> => {
-    const resp = await fetch(`https://api.tfl.gov.uk/Line/${line}/Arrivals`);
-    return await resp.json();
-  });
+  const [arrivalsApiResponse] = createResource(
+    async (): Promise<TflArrivalApiResponse[] | null> => {
+      const resp = await fetch(`https://api.tfl.gov.uk/Line/${line}/Arrivals`);
+      if (resp.status >= 400) {
+        return null;
+      }
+      return await resp.json();
+    }
+  );
   const stations = createMemo((): Stations => {
     if (routeApiResponse.loading || !routeApiResponse.latest) {
       return {};
@@ -146,75 +154,85 @@ export const LiveLineView: Component = () => {
   const labels = () => pathComputer()[2];
   const stationLocations = () => pathComputer()[3];
 
+  const lineColor = lineColors[line] || {r: 0, g: 0, b: 0};
+
   return (
     <>
-      <svg width={300} height={svgHeight()} class="mx-auto">
-        <path
-          d={path()}
-          stroke={`rgb(${lineColors[line].r}, ${lineColors[line].g}, ${lineColors[line].b})`}
-          stroke-width="4"
-          stroke-linecap="round"
-          fill="transparent"
-        />
-        {...labels()}
-        <For each={trains()}>
-          {(train) => {
-            const location = train.location;
-            if (!location) {
-              return null;
-            }
-            const offsetMultiplier = train.direction === "inbound" ? -1 : 1;
-            const x = train.direction === "inbound" ? 10 : 35;
-            if (location.type === "at" && location.station in stationLocations()) {
-              return (
-                <TrainIndicator x={x} y={stationLocations()[location.station].y} train={train} />
-              );
-            } else if (location.type === "leaving" && location.station in stationLocations()) {
-              return (
-                <TrainIndicator
-                  x={x}
-                  y={stationLocations()[location.station].y + 1 * offsetMultiplier}
-                  train={train}
-                />
-              );
-            } else if (location.type === "left" && location.station in stationLocations()) {
-              return (
-                <TrainIndicator
-                  x={x}
-                  y={stationLocations()[location.station].y + 4 * offsetMultiplier}
-                  train={train}
-                />
-              );
-            } else if (location.type === "approaching" && location.station in stationLocations()) {
-              return (
-                <TrainIndicator
-                  x={x}
-                  y={stationLocations()[location.station].y - 4 * offsetMultiplier}
-                  train={train}
-                />
-              );
-            } else if (
-              location.type === "between" &&
-              location.startStation in stationLocations() &&
-              location.endStation in stationLocations()
-            ) {
-              return (
-                <TrainIndicator
-                  x={x}
-                  y={
-                    (stationLocations()[location.startStation].y +
-                      stationLocations()[location.endStation].y) /
-                    2
-                  }
-                  train={train}
-                />
-              );
-            }
+      {(!routeApiResponse.loading && !routeApiResponse.latest) ||
+      (!arrivalsApiResponse.loading && !arrivalsApiResponse) ? (
+        <p>Line {line} not found</p>
+      ) : (
+        <svg width={300} height={svgHeight()} class="mx-auto">
+          <path
+            d={path()}
+            stroke={`rgb(${lineColor.r}, ${lineColor.g}, ${lineColor.b})`}
+            stroke-width="4"
+            stroke-linecap="round"
+            fill="transparent"
+          />
+          {...labels()}
+          <For each={trains()}>
+            {(train) => {
+              const location = train.location;
+              if (!location) {
+                return null;
+              }
+              const offsetMultiplier = train.direction === "inbound" ? -1 : 1;
+              const x = train.direction === "inbound" ? 10 : 35;
+              if (location.type === "at" && location.station in stationLocations()) {
+                return (
+                  <TrainIndicator x={x} y={stationLocations()[location.station].y} train={train} />
+                );
+              } else if (location.type === "leaving" && location.station in stationLocations()) {
+                return (
+                  <TrainIndicator
+                    x={x}
+                    y={stationLocations()[location.station].y + 1 * offsetMultiplier}
+                    train={train}
+                  />
+                );
+              } else if (location.type === "left" && location.station in stationLocations()) {
+                return (
+                  <TrainIndicator
+                    x={x}
+                    y={stationLocations()[location.station].y + 4 * offsetMultiplier}
+                    train={train}
+                  />
+                );
+              } else if (
+                location.type === "approaching" &&
+                location.station in stationLocations()
+              ) {
+                return (
+                  <TrainIndicator
+                    x={x}
+                    y={stationLocations()[location.station].y - 4 * offsetMultiplier}
+                    train={train}
+                  />
+                );
+              } else if (
+                location.type === "between" &&
+                location.startStation in stationLocations() &&
+                location.endStation in stationLocations()
+              ) {
+                return (
+                  <TrainIndicator
+                    x={x}
+                    y={
+                      (stationLocations()[location.startStation].y +
+                        stationLocations()[location.endStation].y) /
+                      2
+                    }
+                    train={train}
+                  />
+                );
+              }
 
-            return null;
-          }}
-        </For>
-      </svg>
+              return null;
+            }}
+          </For>
+        </svg>
+      )}
     </>
   );
 };
