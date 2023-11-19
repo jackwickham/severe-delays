@@ -1,6 +1,8 @@
 import type {Component} from "solid-js";
 import {LineHistory} from "./LineHistory";
 import logo from "./assets/logo-64.png";
+import {Route, Routes} from "@solidjs/router";
+import {LiveLineView} from "./LiveLineView";
 
 const App: Component = () => {
   return (
@@ -14,7 +16,10 @@ const App: Component = () => {
         </div>
       </header>
       <div class="p-4 max-w-7xl mx-auto">
-        <LineHistory />
+        <Routes>
+          <Route path="/" component={LineHistory} />
+          <Route path="/live/:line" component={LiveLineView} />
+        </Routes>
       </div>
     </div>
   );

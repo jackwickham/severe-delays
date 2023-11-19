@@ -9,11 +9,7 @@ export default defineConfig({
     For more info see https://github.com/thetarnav/solid-devtools/tree/main/packages/extension#readme
     */
     // devtools(),
-    solidPlugin({
-      typescript: {
-        onlyRemoveTypeImports: true,
-      },
-    }),
+    solidPlugin(),
   ],
   server: {
     port: 3000,
