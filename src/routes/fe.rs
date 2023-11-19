@@ -1,6 +1,7 @@
 use rocket::fs::NamedFile;
 use rocket::http::Header;
 use rocket::response::Responder;
+use rocket::tokio::fs;
 use std::path::{Path, PathBuf};
 
 pub fn get_routes() -> Vec<rocket::Route> {
@@ -31,18 +32,20 @@ impl<'r, 'o: 'r, R: Responder<'r, 'o>> Responder<'r, 'o> for CacheImmutably<R> {
 #[get("/<path..>")]
 async fn dist(path: PathBuf) -> Option<NamedFile> {
     let mut resolved_path = Path::new("fe/dist").join(path).to_path_buf();
-    if resolved_path.is_dir() {
-        resolved_path.push("index.html");
+    let is_regular_file = fs::metadata(&resolved_path)
+        .await
+        .ok()
+        .filter(|metadata| metadata.is_file())
+        .is_some();
+    if !is_regular_file {
+        resolved_path = Path::new("fe/dist/index.html").to_path_buf();
     }
     NamedFile::open(resolved_path).await.ok()
 }
 
 #[get("/assets/<path..>")]
 async fn assets(path: PathBuf) -> Option<CacheImmutably<NamedFile>> {
-    let mut resolved_path = Path::new("fe/dist/assets").join(path).to_path_buf();
-    if resolved_path.is_dir() {
-        resolved_path.push("index.html");
-    }
+    let resolved_path = Path::new("fe/dist/assets").join(path);
 
     Some(CacheImmutably::wrap(
         NamedFile::open(resolved_path).await.ok()?,
