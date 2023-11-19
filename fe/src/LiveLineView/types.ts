@@ -5,6 +5,7 @@ export interface Train {
   direction?: Direction;
   currentLocation: string;
   location: Location;
+  destination: string;
 }
 
 export type Location =

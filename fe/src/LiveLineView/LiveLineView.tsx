@@ -1,5 +1,5 @@
 import {useParams} from "@solidjs/router";
-import {createResource, type Component, createMemo, For, type JSX} from "solid-js";
+import {createResource, type Component, createMemo, For, type JSX, onCleanup} from "solid-js";
 import {TrainIndicator} from "./TrainIndicator";
 import type {Direction, Location, Station, Stations, Train} from "./types";
 import {lineColors} from "../constants";
@@ -26,6 +26,8 @@ interface TflArrivalApiResponse {
   direction: Direction;
 }
 
+const REFRESH_INTERVAL = 30000;
+
 export const LiveLineView: Component = () => {
   const routeParams = useParams();
   const line = routeParams.line;
@@ -36,15 +38,53 @@ export const LiveLineView: Component = () => {
     }
     return await resp.json();
   });
-  const [arrivalsApiResponse] = createResource(
+
+  let refreshTimeout: number | undefined;
+  let lastRefreshed = Date.now();
+  let visible = true;
+  const [arrivalsApiResponse, {refetch: refreshArrivals}] = createResource(
     async (): Promise<TflArrivalApiResponse[] | null> => {
+      lastRefreshed = Date.now();
+
       const resp = await fetch(`https://api.tfl.gov.uk/Line/${line}/Arrivals`);
       if (resp.status >= 400) {
         return null;
       }
-      return await resp.json();
+      const json = await resp.json();
+
+      if (visible) {
+        refreshTimeout = setTimeout(() => refreshArrivals(), REFRESH_INTERVAL);
+      } else {
+        refreshTimeout = undefined;
+      }
+      return json;
     }
   );
+  const handleVisibilityChange = () => {
+    visible = document.visibilityState === "visible";
+    if (visible) {
+      if (!refreshTimeout) {
+        if (Date.now() - lastRefreshed < REFRESH_INTERVAL) {
+          setTimeout(() => refreshArrivals(), Date.now() - lastRefreshed);
+        } else {
+          refreshArrivals();
+        }
+      }
+    } else if (refreshTimeout) {
+      clearTimeout(refreshTimeout);
+      refreshTimeout = undefined;
+    }
+  };
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  onCleanup(() => {
+    visible = false;
+    if (refreshTimeout) {
+      clearTimeout(refreshTimeout);
+      refreshTimeout = undefined;
+    }
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
+  });
+
   const stations = createMemo((): Stations => {
     if (routeApiResponse.loading || !routeApiResponse.latest) {
       return {};
@@ -83,7 +123,7 @@ export const LiveLineView: Component = () => {
   });
   const trains: () => Train[] = createMemo(() => {
     const res: {[vehicle: string]: Omit<Train, "direction"> & {direction?: Direction}} = {};
-    if (arrivalsApiResponse.loading || !arrivalsApiResponse.latest) {
+    if (!arrivalsApiResponse.latest) {
       return [];
     }
     for (let resp of arrivalsApiResponse.latest) {
@@ -96,6 +136,7 @@ export const LiveLineView: Component = () => {
             currentLocation: resp.currentLocation,
             direction: resp.direction,
             location: parsedLocation,
+            destination: resp.towards,
           };
         }
       }
@@ -243,7 +284,7 @@ const leftRe = /^Left (.+?)(?: Platform .*)?$/;
 const betweenRe = /^(?:In between|Between) (.+) and (.+)$/;
 const approachingRe = /^Approaching (.+?)(?: Platform .*)?$/;
 const knownEdgeCases = /^.* Sidings?$/;
-const todo = /^$|^Near (.*)$|^(.*) area( fast)?$|^(North|South) of (.*)$/;
+const todo = /^$|^Near (.*)$|^(.*) [aA]rea( fast)?$|^(North|South) of (.*)$/;
 
 const parseLocation = (currentLocation: string, stations: Stations): Location | null => {
   let matches;
@@ -296,7 +337,7 @@ const constructLocation = (
 };
 
 const parseStation = (stationName: string, stations: Stations): string | null => {
-  const normalizedSearchName = normalizeName(stationName.toLowerCase());
+  const normalizedSearchName = normalizeName(stationName);
   let best: Station | null = null;
   for (let id in stations) {
     const station = stations[id];
@@ -314,5 +355,11 @@ const parseStation = (stationName: string, stations: Stations): string | null =>
   return best && best.id;
 };
 
+// There are a bunch of inconsistencies in station naming, even for different locations within the same data
 const normalizeName = (stationName: string) =>
-  stationName.toLowerCase().replace(/s?'s?/, "").replace("-", " ").trim();
+  stationName
+    .toLowerCase()
+    .replaceAll(/s?'s?/g, "s")
+    .replaceAll("-", " ")
+    .replaceAll("&", "and")
+    .trim();

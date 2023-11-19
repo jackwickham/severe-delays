@@ -16,7 +16,11 @@ export const TrainIndicator: Component<TrainProps> = (props: TrainProps) => {
     `l -4.2 ${4.2 * directionMultiplier} Z`;
   return (
     <path d={path} class="fill-teal-500">
-      <title>{props.train.currentLocation}</title>
+      <title>{`Train to ${
+        props.train.destination
+      }, currently ${props.train.currentLocation[0].toLowerCase()}${props.train.currentLocation.substring(
+        1
+      )}`}</title>
     </path>
   );
 };
