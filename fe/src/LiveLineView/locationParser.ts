@@ -1,11 +1,11 @@
 import type {Location, Station, Stations} from "./types";
 
-const atRe = /^At (.+?)(?: Platform .*)?$/;
-const leavingRe = /^Leaving (.+?)(?: Platform .*)?$/;
-const leftRe = /^Left (.+?)(?: Platform .*)?$/;
+const atRe = /^At (.+?)(?: (?:Platform |P).*)?$/;
+const leavingRe = /^(?:Leaving|Departing) (.+?)(?: (?:Platform |P).*)?$/;
+const leftRe = /^(?:Left|Departed) (.+?)(?: (?:Platform |P).*)?$/;
 const betweenRe = /^(?:In between|Between) (.+) and (.+)$/;
-const approachingRe = /^Approaching (.+?)(?: Platform .*)?$/;
-const knownEdgeCases = /^.* Sidings?$/;
+const approachingRe = /^Approaching (.+?)(?: (?:Platform |P).*)?$/;
+const knownEdgeCases = /^.* (Sidings?|Depot)$/;
 const todo = /^$|^Near (.*)$|^(.*) [aA]rea( fast)?$|^(North|South) of (.*)$/;
 
 export const parseLocation = (currentLocation: string, stations: Stations): Location | null => {
@@ -68,7 +68,8 @@ const parseStation = (stationName: string, stations: Stations): string | null =>
       return station.id;
     }
     if (
-      normalizedThisName.startsWith(normalizedSearchName) &&
+      (normalizedThisName.startsWith(normalizedSearchName) ||
+        normalizedSearchName.startsWith(normalizedThisName)) &&
       (!best || best.name.length > station.name.length)
     ) {
       best = station;
@@ -78,8 +79,9 @@ const parseStation = (stationName: string, stations: Stations): string | null =>
 };
 
 const SPECIAL_CASES = {
-  "st. john wood": "st. johns wood",
+  "st john wood": "st johns wood",
   "willlesden green": "willesden green",
+  castle: "elephant and castle",
 };
 
 // There are a bunch of inconsistencies in station naming, even for different locations within the same data
@@ -89,6 +91,7 @@ const normalizeName = (stationName: string) => {
     .replaceAll(/s?'s?/g, "s")
     .replaceAll("-", " ")
     .replaceAll("&", "and")
+    .replaceAll(".", "")
     .trim();
   if (normalized in SPECIAL_CASES) {
     return SPECIAL_CASES[normalized as keyof typeof SPECIAL_CASES];
