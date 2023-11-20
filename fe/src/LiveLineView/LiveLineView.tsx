@@ -1,7 +1,7 @@
 import {useParams} from "@solidjs/router";
 import {createResource, type Component, createMemo, For, type JSX, onCleanup} from "solid-js";
 import {TrainIndicator} from "./TrainIndicator";
-import type {Direction, Location, Station, Stations, Train} from "./types";
+import type {Direction, Station, Stations, Train} from "./types";
 import {lineColors} from "../constants";
 import {parseLocation} from "./locationParser";
 
@@ -25,6 +25,8 @@ interface TflArrivalApiResponse {
   towards: string;
   destinationNaptanId: string;
   direction: Direction;
+  naptanId: string;
+  timeToStation: number;
 }
 
 const REFRESH_INTERVAL = 30000;
@@ -96,6 +98,18 @@ export const LiveLineView: Component = () => {
       for (let stopPoint of stopPointSeq.stopPoint) {
         let station = stations[stopPoint.stationId];
         if (!station) {
+          const minutesUntilNextTrains = {
+            inbound: [] as number[],
+            outbound: [] as number[],
+          };
+          if (arrivalsApiResponse.latest) {
+            arrivalsApiResponse.latest.forEach((arrival) => {
+              if (arrival.naptanId === stopPoint.stationId && arrival.direction) {
+                minutesUntilNextTrains[arrival.direction].push(arrival.timeToStation / 60);
+                minutesUntilNextTrains[arrival.direction].sort((a, b) => a - b).splice(2);
+              }
+            });
+          }
           station = {
             id: stopPoint.stationId,
             name: stopPoint.name,
@@ -105,6 +119,7 @@ export const LiveLineView: Component = () => {
             ),
             predecessors: [],
             successors: [],
+            minutesUntilNextTrains: minutesUntilNextTrains,
           };
           stations[stopPoint.stationId] = station;
         }
@@ -153,7 +168,25 @@ export const LiveLineView: Component = () => {
         }
         labels.push(
           <text x="85" y={y + 5}>
-            {node.friendlyName}
+            {node.friendlyName} &nbsp;
+            <tspan class="fill-slate-500 text-sm">
+              {`${
+                node.minutesUntilNextTrains.inbound.length > 0
+                  ? `↑ ${node.minutesUntilNextTrains.inbound.map((t) => t.toFixed(0)).join(", ")}`
+                  : ""
+              }
+              ${
+                node.minutesUntilNextTrains.inbound.length > 0 &&
+                node.minutesUntilNextTrains.outbound.length > 0
+                  ? " / "
+                  : ""
+              }
+              ${
+                node.minutesUntilNextTrains.outbound.length > 0
+                  ? `↓ ${node.minutesUntilNextTrains.outbound.map((t) => t.toFixed(0)).join(", ")}`
+                  : ""
+              }`}
+            </tspan>
           </text>
         );
         if (node.successors.length > 1) {
@@ -175,7 +208,7 @@ export const LiveLineView: Component = () => {
   const stationLocations = () => pathComputer()[3];
 
   const trains: () => Train[] = createMemo(() => {
-    const res: {[vehicle: string]: Omit<Train, "direction"> & {direction?: Direction}} = {};
+    const res: {[vehicle: string]: Train} = {};
     if (!arrivalsApiResponse.latest) {
       return [];
     }
@@ -183,15 +216,13 @@ export const LiveLineView: Component = () => {
       let existing = res[resp.vehicleId];
       if (!existing || !existing.direction) {
         const parsedLocation = parseLocation(resp.currentLocation, stations());
-        if (parsedLocation) {
-          res[resp.vehicleId] = {
-            vehicleId: resp.vehicleId,
-            currentLocation: resp.currentLocation,
-            direction: resp.direction,
-            location: parsedLocation,
-            destination: resp.towards,
-          };
-        }
+        res[resp.vehicleId] = {
+          vehicleId: resp.vehicleId,
+          currentLocation: resp.currentLocation,
+          direction: resp.direction,
+          location: parsedLocation || undefined,
+          destination: resp.towards,
+        };
       }
     }
     return Object.values(res);
@@ -205,7 +236,7 @@ export const LiveLineView: Component = () => {
       (!arrivalsApiResponse.loading && !arrivalsApiResponse) ? (
         <p>Line {line} not found</p>
       ) : (
-        <svg width={300} height={svgHeight()} class="mx-auto">
+        <svg width={400} height={svgHeight()} class="mx-auto">
           <path
             d={path()}
             stroke={`rgb(${lineColor.r}, ${lineColor.g}, ${lineColor.b})`}

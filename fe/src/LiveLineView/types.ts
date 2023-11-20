@@ -4,7 +4,7 @@ export interface Train {
   vehicleId: string;
   direction?: Direction;
   currentLocation: string;
-  location: Location;
+  location?: Location;
   destination: string;
 }
 
@@ -25,6 +25,10 @@ export interface Station {
   friendlyName: string;
   predecessors: string[];
   successors: string[];
+  minutesUntilNextTrains: {
+    outbound: number[];
+    inbound: number[];
+  };
 }
 
 export type Stations = {[id: string]: Station};
