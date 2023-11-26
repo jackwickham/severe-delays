@@ -1,7 +1,7 @@
 import {useParams} from "@solidjs/router";
 import {createResource, type Component, createMemo, For, type JSX, onCleanup} from "solid-js";
 import {TrainIndicator} from "./TrainIndicator";
-import type {Direction, Station, Stations, Train} from "./types";
+import type {Direction, Location, Station, Stations, Train} from "./types";
 import {lineColors} from "../constants";
 import {parseLocation} from "./locationParser";
 
@@ -218,18 +218,22 @@ export const LiveLineView: Component = () => {
     }
     for (let resp of arrivalsApiResponse.latest) {
       let existing = res[resp.vehicleId];
-      if (!existing || !existing.direction) {
+      if (!existing || !existing.direction || !existing.location) {
         const parsedLocation = parseLocation(resp.currentLocation, stations());
         res[resp.vehicleId] = {
           vehicleId: resp.vehicleId,
           currentLocation: resp.currentLocation,
-          direction: resp.direction,
-          location: parsedLocation || undefined,
+          direction:
+            resp.direction ||
+            (parsedLocation &&
+              maybeInferDirection(parsedLocation, resp.destinationNaptanId, stations())) ||
+            existing?.direction,
+          location: parsedLocation || existing?.location,
           destination: resp.towards,
         };
       }
     }
-    return Object.values(res);
+    return fillInMissingDirections(Object.values(res), stations());
   });
 
   const lineColor = lineColors[line] || {r: 0, g: 0, b: 0};
@@ -285,6 +289,11 @@ export const LiveLineView: Component = () => {
                 const location = train.location;
                 if (!location) {
                   return null;
+                }
+                if (!train.direction) {
+                  console.log(
+                    `Train with no direction. Destination=${train.destination}, location=${train.currentLocation}`
+                  );
                 }
                 const offsetMultiplier = train.direction === "inbound" ? -1 : 1;
                 const x = train.direction === "inbound" ? 10 : 35;
@@ -349,4 +358,78 @@ export const LiveLineView: Component = () => {
       )}
     </>
   );
+};
+
+const maybeInferDirection = (
+  location: Location,
+  destination: string,
+  stations: Stations
+): Direction | null => {
+  if (stations[destination]?.predecessors.length === 0) {
+    return "inbound";
+  } else if (stations[destination]?.successors.length === 0) {
+    return "outbound";
+  }
+
+  switch (location.type) {
+    case "between": {
+      if (stations[location.startStation]?.successors.includes(location.endStation)) {
+        return "outbound";
+      } else if (stations[location.startStation]?.predecessors.includes(location.endStation)) {
+        return "inbound";
+      }
+      break;
+    }
+    case "approaching":
+    case "at":
+    case "leaving":
+    case "left": {
+      if (stations[location.station]?.successors.includes(destination)) {
+        return "outbound";
+      } else if (stations[location.station]?.predecessors.includes(destination)) {
+        return "inbound";
+      }
+      break;
+    }
+  }
+
+  return null;
+};
+
+const fillInMissingDirections = (trains: Train[], stations: Stations): Train[] => {
+  return trains.map((train) => {
+    if (train.direction) {
+      return train;
+    }
+    let predecessorsToTry = [stations[train.destination]];
+    let successorsToTry = [stations[train.destination]];
+    for (let i = 0; i < 10; i++) {
+      const newPredecessorsToTry: Station[] = [];
+      for (let predecessor of predecessorsToTry) {
+        if (!predecessor) {
+          continue;
+        }
+        if (predecessor.predecessors.length === 0) {
+          train.direction = "inbound";
+          return train;
+        }
+        predecessor.predecessors.forEach((id) => newPredecessorsToTry.push(stations[id]));
+      }
+      predecessorsToTry = newPredecessorsToTry;
+
+      const newSuccessorsToTry: Station[] = [];
+      for (let successor of successorsToTry) {
+        if (!successor) {
+          continue;
+        }
+        if (successor.successors.length === 0) {
+          train.direction = "outbound";
+          return train;
+        }
+        successor.successors.forEach((id) => newSuccessorsToTry.push(stations[id]));
+      }
+      successorsToTry = newSuccessorsToTry;
+    }
+    return train;
+  });
 };
