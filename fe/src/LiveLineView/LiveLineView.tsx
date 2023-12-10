@@ -1,9 +1,11 @@
-import {useParams} from "@solidjs/router";
-import {createResource, type Component, createMemo, For, type JSX, onCleanup} from "solid-js";
+import {A, useParams} from "@solidjs/router";
+import {createResource, type Component, createMemo, For, type JSX, onCleanup, Show} from "solid-js";
 import {TrainIndicator} from "./TrainIndicator";
 import type {Direction, Location, Station, Stations, Train} from "./types";
 import {lineColors} from "../constants";
 import {parseLocation} from "./locationParser";
+import {Button} from "../components/Button";
+import feather from "feather-icons";
 
 interface TflRouteApiResponse {
   stations: [];
@@ -245,7 +247,15 @@ export const LiveLineView: Component = () => {
         <p>Line {line} not found</p>
       ) : (
         <div class="mx-auto w-fit">
-          <div class="ps-[52px] mb-4">
+          <div class="mb-4 flex flex-row items-center">
+            <A href="/" class="me-8">
+              <Button class="flex flex-row items-center">
+                <span
+                  innerHTML={feather.icons["chevron-left"].toSvg({width: 16, class: "inline"})}
+                />{" "}
+                Back
+              </Button>
+            </A>
             <svg width="32" height="32">
               <circle
                 cx="16"
@@ -256,7 +266,7 @@ export const LiveLineView: Component = () => {
                 stroke-dasharray="50" // 2πr = 50
                 stroke-dashoffset="50"
                 transform="rotate(-90 16 16)"
-                class="stroke-teal-500"
+                class={arrivalsApiResponse.error ? "stroke-red-500" : "stroke-teal-500"}
               >
                 <animate
                   attributeName="stroke-dashoffset"
@@ -268,6 +278,17 @@ export const LiveLineView: Component = () => {
                   ref={refreshIndicator}
                 />
               </circle>
+              <Show when={arrivalsApiResponse.error}>
+                <text
+                  x="50%"
+                  y="50%"
+                  dominant-baseline="middle"
+                  text-anchor="middle"
+                  class="text-xl"
+                >
+                  !
+                </text>
+              </Show>
             </svg>
           </div>
           <svg

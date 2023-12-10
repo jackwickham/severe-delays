@@ -8,6 +8,10 @@ pub struct LineStatus {
     pub reason: Option<String>,
 }
 
+pub struct LineMetadata {
+    pub mode: String,
+}
+
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Status {
     Suspended,

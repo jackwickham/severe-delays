@@ -1,5 +1,10 @@
 export interface ApiResponse {
-  [lineId: string]: LineStatus[];
+  [lineId: string]: LineHistory;
+}
+
+export interface LineHistory {
+  history: LineStatus[];
+  metadata: LineMetadata;
 }
 
 export interface LineStatus {
@@ -25,3 +30,7 @@ export type Status =
   | "GoodService"
   | "Other"
   | string;
+
+export interface LineMetadata {
+  mode?: string;
+}

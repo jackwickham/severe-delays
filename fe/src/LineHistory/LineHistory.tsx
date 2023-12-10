@@ -36,8 +36,9 @@ export const LineHistory: Component = () => {
       statusHistory: HistoryEntry[];
       color?: {r: number; g: number; b: number};
       name: string;
+      mode?: string;
     }[] = [];
-    for (const [lineId, historyEntries] of Object.entries(resp)) {
+    for (const [lineId, {history: historyEntries, metadata}] of Object.entries(resp)) {
       result.push({
         statusHistory: historyEntries.map((status) => ({
           startTime: new Date(status.from),
@@ -49,6 +50,7 @@ export const LineHistory: Component = () => {
         })),
         color: lineColors[lineId],
         name: lineId,
+        mode: metadata.mode,
       });
     }
     result.sort((a, b) => a.name.localeCompare(b.name));
@@ -102,6 +104,7 @@ export const LineHistory: Component = () => {
               statusHistory={line.statusHistory}
               color={line.color}
               displayRange={displayRange()}
+              mode={line.mode}
             />
           )}
         </For>

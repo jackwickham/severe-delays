@@ -1,12 +1,14 @@
 use serde::Deserialize;
 use serde_json::Value;
 
-use crate::types::{LineStatus, Status};
+use crate::types::{LineMetadata, LineStatus, Status};
 
 #[derive(Deserialize, Debug, Clone)]
 struct TflStatus {
     #[serde(rename = "lineStatuses")]
     pub line_statuses: Vec<TflLineStatus>,
+    #[serde(rename = "modeName")]
+    pub mode_name: String,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -16,7 +18,7 @@ struct TflLineStatus {
     pub reason: Option<String>,
 }
 
-pub fn try_parse(line_id: &str, value: &Value) -> Option<Vec<LineStatus>> {
+pub fn try_parse(line_id: &str, value: &Value) -> Option<(LineMetadata, Vec<LineStatus>)> {
     let status: TflStatus = serde_json::from_value(value.clone())
         .map_err(|err| {
             log::warn!("Error parsing TFL status for line {}: {:?}", line_id, err);
@@ -31,7 +33,10 @@ pub fn try_parse(line_id: &str, value: &Value) -> Option<Vec<LineStatus>> {
         })
         .collect::<Vec<_>>();
     statuses.sort_by_key(|s| s.status);
-    Some(statuses)
+    let metadata = LineMetadata {
+        mode: status.mode_name,
+    };
+    Some((metadata, statuses))
 }
 
 fn from_tfl_status(status_severity: i32) -> Status {

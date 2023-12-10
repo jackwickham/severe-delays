@@ -1,9 +1,9 @@
 import {For, type Component, createMemo, Show, createSignal, onMount} from "solid-js";
 import {type LineStatus, State} from "./types";
 import {Popover} from "../Popover";
-import {Settings} from "./Settings";
 import {Button} from "../components/Button";
 import feather from "feather-icons";
+import {A} from "@solidjs/router";
 
 export interface HistoryEntry {
   startTime: Date;
@@ -23,6 +23,7 @@ export interface LineProps {
     g: number;
     b: number;
   };
+  mode?: string;
 }
 
 interface RenderedHistoryEntry {
@@ -168,7 +169,17 @@ export const Line: Component<LineProps> = (props: LineProps) => {
               </For>
             </div>
           </div>
-          <div>
+          <div class="flex flex-row gap-x-2">
+            <Show when={props.mode === "tube"}>
+              <A href={`/live/${props.name}`} title="Current train locations">
+                <Button rounded={false} padded={false} class="rounded-full w-8 h-8 p-0">
+                  <span
+                    class="flex justify-around"
+                    innerHTML={feather.icons["radio"].toSvg({width: 16})}
+                  />
+                </Button>
+              </A>
+            </Show>
             <Button
               rounded={false}
               padded={false}
