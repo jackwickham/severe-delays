@@ -219,10 +219,11 @@ export const LiveLineView: Component = () => {
       return [];
     }
     for (let resp of arrivalsApiResponse.latest) {
-      let existing = res[resp.vehicleId];
+      let vehicle = resp.vehicleId != "000" ? resp.vehicleId : resp.currentLocation;
+      let existing = res[vehicle];
       if (!existing || !existing.direction || !existing.location) {
         const parsedLocation = parseLocation(resp.currentLocation, stations());
-        res[resp.vehicleId] = {
+        res[vehicle] = {
           vehicleId: resp.vehicleId,
           currentLocation: resp.currentLocation,
           direction:
