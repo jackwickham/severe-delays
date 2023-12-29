@@ -20,7 +20,7 @@ export const TrainIndicator: Component<TrainProps> = (props: TrainProps) => {
         props.train.destination
       }, currently ${props.train.currentLocation[0].toLowerCase()}${props.train.currentLocation.substring(
         1
-      )}`}</title>
+      )} [${props.train.vehicleId}]`}</title>
     </path>
   );
 };
