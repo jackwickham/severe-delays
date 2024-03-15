@@ -42,7 +42,7 @@ devDependencies:
     version: 4.5.2
   vite-plugin-solid:
     specifier: ^2.7.0
-    version: 2.10.1(solid-js@1.8.15)(vite@4.5.2)
+    version: 2.10.2(solid-js@1.8.15)(vite@4.5.2)
 
 packages:
 
@@ -1560,8 +1560,8 @@ packages:
     resolution: {integrity: sha512-hGdgQozCsQJMyfK5urgFcWEqsSSrK63Awe0t/IMR0bZ0QMtnuaiHzThW81guu3qx9abLi99NEuiaN6P9gVYsNg==}
     dev: true
 
-  /vite-plugin-solid@2.10.1(solid-js@1.8.15)(vite@4.5.2):
-    resolution: {integrity: sha512-kfVdNLWaJqaJVL52U6iCCKNW/nXE7bS1VVGOWPGllOkJfcNILymVSY0LCBLSnyy0iYnRtrXpiHm14rMuzeC7CA==}
+  /vite-plugin-solid@2.10.2(solid-js@1.8.15)(vite@4.5.2):
+    resolution: {integrity: sha512-AOEtwMe2baBSXMXdo+BUwECC8IFHcKS6WQV/1NEd+Q7vHPap5fmIhLcAzr+DUJ04/KHx/1UBU0l1/GWP+rMAPQ==}
     peerDependencies:
       '@testing-library/jest-dom': ^5.16.6 || ^5.17.0 || ^6.*
       solid-js: ^1.7.2
