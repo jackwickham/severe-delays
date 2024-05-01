@@ -10,7 +10,7 @@ dependencies:
     version: 0.9.1(solid-js@1.8.17)
   feather-icons:
     specifier: ^4.29.1
-    version: 4.29.1
+    version: 4.29.2
   solid-js:
     specifier: ^1.7.6
     version: 1.8.17
@@ -1002,8 +1002,8 @@ packages:
       reusify: 1.0.4
     dev: true
 
-  /feather-icons@4.29.1:
-    resolution: {integrity: sha512-P1we61haGTds6lKWe6CCVPsNULb8tHr1y6S9gXEpU+lNR1Ja7GdV0A1l2hTNmzXv+0Stix/3YMWMAn7n1Qtd6A==}
+  /feather-icons@4.29.2:
+    resolution: {integrity: sha512-0TaCFTnBTVCz6U+baY2UJNKne5ifGh7sMG4ZC2LoBWCZdIyPa+y6UiR4lEYGws1JOFWdee8KAsAIvu0VcXqiqA==}
     dependencies:
       classnames: 2.3.2
       core-js: 3.33.0
