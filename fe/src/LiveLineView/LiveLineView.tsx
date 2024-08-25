@@ -1,26 +1,12 @@
 import {A, useParams} from "@solidjs/router";
 import {createResource, type Component, createMemo, For, type JSX, onCleanup, Show} from "solid-js";
 import {TrainIndicator} from "./TrainIndicator";
-import type {Direction, Location, Station, Stations, Train} from "./types";
+import type {Direction, Location, Station, Stations, TflRouteApiResponse, Train} from "./types";
 import {lineConfigs} from "../constants";
 import {parseLocation} from "./locationParser";
 import {Button} from "../components/Button";
 import feather from "feather-icons";
-import {northernLineLayout} from "./lineLayouts";
-
-interface TflRouteApiResponse {
-  stations: [];
-  stopPointSequences: Array<{
-    direction: Direction;
-    branchId: number;
-    nextBranchIds: number[];
-    prevBranchIds: number[];
-    stopPoint: Array<{
-      stationId: string;
-      name: string;
-    }>;
-  }>;
-}
+import {getLineLayout} from "./lineLayouts";
 
 interface TflArrivalApiResponse {
   vehicleId: string;
@@ -154,10 +140,15 @@ export const LiveLineView: Component = () => {
       JSX.Element[],
       {[stationId: string]: {x: number; y: number; labelSide: "left" | "right"}},
     ] => {
-      if (line === "northern") {
-        let path = northernLineLayout.edges
+      if (routeApiResponse.loading || !routeApiResponse.latest) {
+        return ["", 0, [], {}];
+      }
+
+      if (true) {
+        const lineLayout = getLineLayout(line, routeApiResponse.latest);
+        let path = lineLayout.edges
           .map((edge) => {
-            const vertices = edge.map((vertex) => northernLineLayout.stationLocations[vertex]);
+            const vertices = edge.map((vertex) => lineLayout.stationLocations[vertex]);
             const components = [`M ${vertices[0].x} ${vertices[0].y}`];
             for (let i = 1; i < vertices.length; i++) {
               components.push(
@@ -169,16 +160,18 @@ export const LiveLineView: Component = () => {
             return components.join(" ");
           })
           .join(" ");
-        const labelMarkers = Object.values(northernLineLayout.stationLocations)
+        const labelMarkers = Object.values(lineLayout.stationLocations)
           .map((loc) => `M ${loc.x} ${loc.y} l ${loc.labelSide === "left" ? -10 : 10} 0`)
           .join(" ");
-        const spurs = (northernLineLayout.spurs || []).map((spur) => {
-          const start = northernLineLayout.stationLocations[spur.stationName];
-          const vSign = spur.startDirection === "up" ? "-" : "";
-          const hSign = spur.endDirection === "left" ? "-" : "";
-          return `M ${start.x} ${start.y} c 0 ${vSign}7, ${hSign}7 ${vSign}12, ${hSign}12 ${vSign}12`;
-        });
-        const labels = Object.values(northernLineLayout.stationLocations).map((location) => (
+        const spurs = (lineLayout.spurs || [])
+          .map((spur) => {
+            const start = lineLayout.stationLocations[spur.stationName];
+            const vSign = spur.startDirection === "up" ? "-" : "";
+            const hSign = spur.endDirection === "left" ? "-" : "";
+            return `M ${start.x} ${start.y} c 0 ${vSign}7, ${hSign}7 ${vSign}12, ${hSign}12 ${vSign}12`;
+          })
+          .join(" ");
+        const labels = Object.values(lineLayout.stationLocations).map((location) => (
           <text
             x={location.x + (location.labelSide === "left" ? -55 : 55)}
             y={location.y + 5}
@@ -189,10 +182,10 @@ export const LiveLineView: Component = () => {
         ));
         return [
           `${path} ${labelMarkers} ${spurs}`,
-          1400,
+          Math.max(...Object.values(lineLayout.stationLocations).map((layout) => layout.y)) + 20,
           labels,
           Object.fromEntries(
-            Object.values(northernLineLayout.stationLocations).map((location) => [
+            Object.values(lineLayout.stationLocations).map((location) => [
               location.stationId,
               location,
             ])

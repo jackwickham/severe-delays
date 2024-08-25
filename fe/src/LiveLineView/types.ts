@@ -32,3 +32,17 @@ export interface Station {
 }
 
 export type Stations = {[id: string]: Station};
+
+export interface TflRouteApiResponse {
+  stations: [];
+  stopPointSequences: Array<{
+    direction: Direction;
+    branchId: number;
+    nextBranchIds: number[];
+    prevBranchIds: number[];
+    stopPoint: Array<{
+      stationId: string;
+      name: string;
+    }>;
+  }>;
+}

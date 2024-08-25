@@ -1,3 +1,5 @@
+import type {Stations, TflRouteApiResponse} from "./types";
+
 export interface LineLayout {
   stationLocations: {
     [stationName: string]: {x: number; y: number; labelSide: "left" | "right"; stationId: string};
@@ -14,7 +16,338 @@ const ALIGN_LEFT = 280;
 const ALIGN_CENTER = 300;
 const ALIGN_RIGHT = 320;
 
-export const northernLineLayout: LineLayout = {
+const centralLineLayout: LineLayout = {
+  stationLocations: {
+    westRuislip: {x: ALIGN_RIGHT, y: 40, labelSide: "right", stationId: "940GZZLUWRP"},
+    ruislipGardens: {x: ALIGN_RIGHT, y: 80, labelSide: "right", stationId: "940GZZLURSG"},
+    southRuislip: {x: ALIGN_RIGHT, y: 120, labelSide: "right", stationId: "940GZZLUSRP"},
+    northolt: {x: ALIGN_RIGHT, y: 160, labelSide: "right", stationId: "940GZZLUNHT"},
+    greenford: {x: ALIGN_RIGHT, y: 200, labelSide: "right", stationId: "940GZZLUGFD"},
+    perivale: {x: ALIGN_RIGHT, y: 240, labelSide: "right", stationId: "940GZZLUPVL"},
+    hangerLane: {x: ALIGN_RIGHT, y: 280, labelSide: "right", stationId: "940GZZLUHGR"},
+    northActon: {x: ALIGN_RIGHT, y: 320, labelSide: "right", stationId: "940GZZLUNAN"},
+    eastActon: {x: ALIGN_RIGHT, y: 360, labelSide: "right", stationId: "940GZZLUEAN"},
+    whiteCity: {x: ALIGN_RIGHT, y: 400, labelSide: "right", stationId: "940GZZLUWCY"},
+    shepherdsBush: {x: ALIGN_RIGHT, y: 440, labelSide: "right", stationId: "940GZZLUSBC"},
+    hollandPark: {x: ALIGN_RIGHT, y: 480, labelSide: "right", stationId: "940GZZLUHPK"},
+    nottingHillGate: {x: ALIGN_RIGHT, y: 520, labelSide: "right", stationId: "940GZZLUNHG"},
+    queensway: {x: ALIGN_RIGHT, y: 560, labelSide: "right", stationId: "940GZZLUQWY"},
+    lancasterGate: {x: ALIGN_RIGHT, y: 600, labelSide: "right", stationId: "940GZZLULGT"},
+    marbleArch: {x: ALIGN_RIGHT, y: 640, labelSide: "right", stationId: "940GZZLUMBA"},
+    bondStreet: {x: ALIGN_RIGHT, y: 680, labelSide: "right", stationId: "940GZZLUBND"},
+    oxfordCircus: {x: ALIGN_RIGHT, y: 720, labelSide: "right", stationId: "940GZZLUOXC"},
+    tottenhamCourtRoad: {x: ALIGN_RIGHT, y: 760, labelSide: "right", stationId: "940GZZLUTCR"},
+    holborn: {x: ALIGN_RIGHT, y: 800, labelSide: "right", stationId: "940GZZLUHBN"},
+    chanceryLane: {x: ALIGN_RIGHT, y: 840, labelSide: "right", stationId: "940GZZLUCHL"},
+    stPauls: {x: ALIGN_RIGHT, y: 880, labelSide: "right", stationId: "940GZZLUSPU"},
+    bank: {x: ALIGN_RIGHT, y: 920, labelSide: "right", stationId: "940GZZLUBNK"},
+    liverpoolStreet: {x: ALIGN_RIGHT, y: 960, labelSide: "right", stationId: "940GZZLULVT"},
+    bethnalGreen: {x: ALIGN_RIGHT, y: 1000, labelSide: "right", stationId: "940GZZLUBLG"},
+    mileEnd: {x: ALIGN_RIGHT, y: 1040, labelSide: "right", stationId: "940GZZLUMED"},
+    stratford: {x: ALIGN_RIGHT, y: 1080, labelSide: "right", stationId: "940GZZLUSTD"},
+    leyton: {x: ALIGN_RIGHT, y: 1120, labelSide: "right", stationId: "940GZZLULYN"},
+    leytonstone: {x: ALIGN_RIGHT, y: 1160, labelSide: "right", stationId: "940GZZLULYS"},
+    snaresbrook: {x: ALIGN_RIGHT, y: 1200, labelSide: "right", stationId: "940GZZLUSNB"},
+    southWoodford: {x: ALIGN_RIGHT, y: 1240, labelSide: "right", stationId: "940GZZLUSWF"},
+    woodford: {x: ALIGN_RIGHT, y: 1280, labelSide: "right", stationId: "940GZZLUWOF"},
+    buckhurstHill: {x: ALIGN_RIGHT, y: 1320, labelSide: "right", stationId: "940GZZLUBKH"},
+    loughton: {x: ALIGN_RIGHT, y: 1360, labelSide: "right", stationId: "940GZZLULGN"},
+    debden: {x: ALIGN_RIGHT, y: 1400, labelSide: "right", stationId: "940GZZLUDBN"},
+    theydonBois: {x: ALIGN_RIGHT, y: 1440, labelSide: "right", stationId: "940GZZLUTHB"},
+    epping: {x: ALIGN_RIGHT, y: 1480, labelSide: "right", stationId: "940GZZLUEPG"},
+    ealingBroadway: {x: ALIGN_LEFT, y: 240, labelSide: "left", stationId: "940GZZLUEBY"},
+    westActon: {x: ALIGN_LEFT, y: 280, labelSide: "left", stationId: "940GZZLUWTA"},
+    wanstead: {x: ALIGN_LEFT, y: 1200, labelSide: "left", stationId: "940GZZLUWSD"},
+    redbridge: {x: ALIGN_LEFT, y: 1240, labelSide: "left", stationId: "940GZZLURBG"},
+    gantsHill: {x: ALIGN_LEFT, y: 1280, labelSide: "left", stationId: "940GZZLUGTH"},
+    newburyPark: {x: ALIGN_LEFT, y: 1320, labelSide: "left", stationId: "940GZZLUNBP"},
+    barkingside: {x: ALIGN_LEFT, y: 1360, labelSide: "left", stationId: "940GZZLUBKE"},
+    fairlop: {x: ALIGN_LEFT, y: 1400, labelSide: "left", stationId: "940GZZLUFLP"},
+    hainult: {x: ALIGN_LEFT, y: 1440, labelSide: "left", stationId: "940GZZLUHLT"},
+  },
+  edges: [
+    [
+      "westRuislip",
+      "ruislipGardens",
+      "southRuislip",
+      "northolt",
+      "greenford",
+      "perivale",
+      "hangerLane",
+      "northActon",
+      "eastActon",
+      "whiteCity",
+      "shepherdsBush",
+      "hollandPark",
+      "nottingHillGate",
+      "queensway",
+      "lancasterGate",
+      "marbleArch",
+      "bondStreet",
+      "oxfordCircus",
+      "tottenhamCourtRoad",
+      "holborn",
+      "chanceryLane",
+      "stPauls",
+      "bank",
+      "liverpoolStreet",
+      "bethnalGreen",
+      "mileEnd",
+      "stratford",
+      "leyton",
+      "leytonstone",
+      "snaresbrook",
+      "southWoodford",
+      "woodford",
+      "buckhurstHill",
+      "loughton",
+      "debden",
+      "theydonBois",
+      "epping",
+    ],
+    ["ealingBroadway", "westActon", "northActon"],
+    [
+      "leytonstone",
+      "wanstead",
+      "redbridge",
+      "gantsHill",
+      "newburyPark",
+      "barkingside",
+      "fairlop",
+      "hainult",
+    ],
+  ],
+  spurs: [
+    {
+      stationName: "hainult",
+      startDirection: "down",
+      endDirection: "right",
+    },
+  ],
+};
+
+const districtLineLayout: LineLayout = {
+  stationLocations: {
+    ealingBroadway: {x: ALIGN_RIGHT, y: 40, labelSide: "right", stationId: "940GZZLUEBY"},
+    ealingCommon: {x: ALIGN_RIGHT, y: 80, labelSide: "right", stationId: "940GZZLUECM"},
+    actonTown: {x: ALIGN_RIGHT, y: 120, labelSide: "right", stationId: "940GZZLUACT"},
+    chiswickPark: {x: ALIGN_RIGHT, y: 160, labelSide: "right", stationId: "940GZZLUCWP"},
+    turnhamGreen: {x: ALIGN_RIGHT, y: 200, labelSide: "right", stationId: "940GZZLUTNG"},
+
+    richmond: {x: ALIGN_LEFT, y: 80, labelSide: "left", stationId: "940GZZLURMD"},
+    kewGardens: {x: ALIGN_LEFT, y: 120, labelSide: "left", stationId: "940GZZLUKWG"},
+    gunnersbury: {x: ALIGN_LEFT, y: 160, labelSide: "left", stationId: "940GZZLUGBY"},
+
+    stamfordBrook: {x: ALIGN_RIGHT, y: 256, labelSide: "right", stationId: "940GZZLUSFB"},
+    ravenscourtPark: {x: ALIGN_RIGHT, y: 312, labelSide: "right", stationId: "940GZZLURVP"},
+    hammersmith: {x: ALIGN_RIGHT, y: 368, labelSide: "right", stationId: "940GZZLUHSD"},
+    baronsCourt: {x: ALIGN_RIGHT, y: 424, labelSide: "right", stationId: "940GZZLUBSC"},
+    westKensington: {x: ALIGN_RIGHT, y: 480, labelSide: "right", stationId: "940GZZLUWKN"},
+
+    wimbledon: {x: ALIGN_LEFT, y: 200, labelSide: "left", stationId: "940GZZLUWIM"},
+    wimbledonPark: {x: ALIGN_LEFT, y: 240, labelSide: "left", stationId: "940GZZLUWIP"},
+    southfields: {x: ALIGN_LEFT, y: 280, labelSide: "left", stationId: "940GZZLUSFS"},
+    eastPutney: {x: ALIGN_LEFT, y: 320, labelSide: "left", stationId: "940GZZLUEPY"},
+    putneyBridge: {x: ALIGN_LEFT, y: 360, labelSide: "left", stationId: "940GZZLUPYB"},
+    parsonsGreen: {x: ALIGN_LEFT, y: 400, labelSide: "left", stationId: "940GZZLUPSG"},
+    fulhamBroadway: {x: ALIGN_LEFT, y: 440, labelSide: "left", stationId: "940GZZLUFBY"},
+    westBrompton: {x: ALIGN_LEFT, y: 480, labelSide: "left", stationId: "940GZZLUWBN"},
+
+    earlsCourt: {x: ALIGN_CENTER, y: 520, labelSide: "right", stationId: "940GZZLUECT"},
+
+    gloucesterRoad: {x: ALIGN_LEFT, y: 560, labelSide: "left", stationId: "940GZZLUGTR"},
+    southKensington: {x: ALIGN_LEFT, y: 600, labelSide: "left", stationId: "940GZZLUSKS"},
+    sloaneSquare: {x: ALIGN_LEFT, y: 640, labelSide: "left", stationId: "940GZZLUSSQ"},
+    victoria: {x: ALIGN_LEFT, y: 680, labelSide: "left", stationId: "940GZZLUVIC"},
+    stJamessPark: {x: ALIGN_LEFT, y: 720, labelSide: "left", stationId: "940GZZLUSJP"},
+    westminster: {x: ALIGN_LEFT, y: 760, labelSide: "left", stationId: "940GZZLUWSM"},
+    embankment: {x: ALIGN_LEFT, y: 800, labelSide: "left", stationId: "940GZZLUEMB"},
+    temple: {x: ALIGN_LEFT, y: 840, labelSide: "left", stationId: "940GZZLUTMP"},
+    blackfriars: {x: ALIGN_LEFT, y: 880, labelSide: "left", stationId: "940GZZLUBKF"},
+    mansionHouse: {x: ALIGN_LEFT, y: 920, labelSide: "left", stationId: "940GZZLUMSH"},
+    cannonStreet: {x: ALIGN_LEFT, y: 960, labelSide: "left", stationId: "940GZZLUCST"},
+    monument: {x: ALIGN_LEFT, y: 1000, labelSide: "left", stationId: "940GZZLUMMT"},
+    towerHill: {x: ALIGN_LEFT, y: 1040, labelSide: "left", stationId: "940GZZLUTWH"},
+    aldgateEast: {x: ALIGN_LEFT, y: 1080, labelSide: "left", stationId: "940GZZLUADE"},
+    whitechapel: {x: ALIGN_LEFT, y: 1120, labelSide: "left", stationId: "940GZZLUWPL"},
+    stepneyGreen: {x: ALIGN_LEFT, y: 1160, labelSide: "left", stationId: "940GZZLUSGN"},
+    mileEnd: {x: ALIGN_LEFT, y: 1200, labelSide: "left", stationId: "940GZZLUMED"},
+    bowRoad: {x: ALIGN_LEFT, y: 1240, labelSide: "left", stationId: "940GZZLUBWR"},
+    bromleyByBow: {x: ALIGN_LEFT, y: 1280, labelSide: "left", stationId: "940GZZLUBBB"},
+    westHam: {x: ALIGN_LEFT, y: 1320, labelSide: "left", stationId: "940GZZLUWHM"},
+    plaistow: {x: ALIGN_LEFT, y: 1360, labelSide: "left", stationId: "940GZZLUPLW"},
+    uptonPark: {x: ALIGN_LEFT, y: 1400, labelSide: "left", stationId: "940GZZLUUPK"},
+    eastHam: {x: ALIGN_LEFT, y: 1440, labelSide: "left", stationId: "940GZZLUEHM"},
+    barking: {x: ALIGN_LEFT, y: 1480, labelSide: "left", stationId: "940GZZLUBKG"},
+    upney: {x: ALIGN_LEFT, y: 1520, labelSide: "left", stationId: "940GZZLUUPY"},
+    becontree: {x: ALIGN_LEFT, y: 1560, labelSide: "left", stationId: "940GZZLUBEC"},
+    dagenhamHeathway: {x: ALIGN_LEFT, y: 1600, labelSide: "left", stationId: "940GZZLUDGY"},
+    dagenhamEast: {x: ALIGN_LEFT, y: 1640, labelSide: "left", stationId: "940GZZLUDGE"},
+    elmPark: {x: ALIGN_LEFT, y: 1680, labelSide: "left", stationId: "940GZZLUEPK"},
+    hornchurch: {x: ALIGN_LEFT, y: 1720, labelSide: "left", stationId: "940GZZLUHCH"},
+    upminsterBridge: {x: ALIGN_LEFT, y: 1760, labelSide: "left", stationId: "940GZZLUUPB"},
+    upminster: {x: ALIGN_LEFT, y: 1800, labelSide: "left", stationId: "940GZZLUUPM"},
+
+    highStreetKensington: {x: ALIGN_RIGHT, y: 560, labelSide: "right", stationId: "940GZZLUHSK"},
+    nottingHillGate: {x: ALIGN_RIGHT, y: 600, labelSide: "right", stationId: "940GZZLUNHG"},
+    bayswater: {x: ALIGN_RIGHT, y: 640, labelSide: "right", stationId: "940GZZLUBWT"},
+    paddington: {x: ALIGN_RIGHT, y: 680, labelSide: "right", stationId: "940GZZLUPAC"},
+    edgwareRoad: {x: ALIGN_RIGHT, y: 720, labelSide: "right", stationId: "940GZZLUERC"},
+  },
+  edges: [
+    ["ealingBroadway", "ealingCommon", "actonTown", "chiswickPark", "turnhamGreen"],
+    ["richmond", "kewGardens", "gunnersbury", "turnhamGreen"],
+    [
+      "turnhamGreen",
+      "stamfordBrook",
+      "ravenscourtPark",
+      "hammersmith",
+      "baronsCourt",
+      "westKensington",
+      "earlsCourt",
+    ],
+    [
+      "wimbledon",
+      "wimbledonPark",
+      "southfields",
+      "eastPutney",
+      "putneyBridge",
+      "parsonsGreen",
+      "fulhamBroadway",
+      "westBrompton",
+      "earlsCourt",
+    ],
+    [
+      "earlsCourt",
+      "gloucesterRoad",
+      "southKensington",
+      "sloaneSquare",
+      "victoria",
+      "stJamessPark",
+      "westminster",
+      "embankment",
+      "temple",
+      "blackfriars",
+      "mansionHouse",
+      "cannonStreet",
+      "monument",
+      "towerHill",
+      "aldgateEast",
+      "whitechapel",
+      "stepneyGreen",
+      "mileEnd",
+      "bowRoad",
+      "bromleyByBow",
+      "westHam",
+      "plaistow",
+      "uptonPark",
+      "eastHam",
+      "barking",
+      "upney",
+      "becontree",
+      "dagenhamHeathway",
+      "dagenhamEast",
+      "elmPark",
+      "hornchurch",
+      "upminsterBridge",
+      "upminster",
+    ],
+    [
+      "earlsCourt",
+      "highStreetKensington",
+      "nottingHillGate",
+      "bayswater",
+      "paddington",
+      "edgwareRoad",
+    ],
+  ],
+  spurs: [
+    {
+      stationName: "earlsCourt",
+      startDirection: "up",
+      endDirection: "right",
+    },
+  ],
+};
+
+const metropolitanLineLayout: LineLayout = {
+  stationLocations: {
+    amersham: {x: ALIGN_LEFT, y: 40, labelSide: "left", stationId: "940GZZLUAMS"},
+    chesham: {x: ALIGN_RIGHT, y: 40, labelSide: "right", stationId: "940GZZLUCSM"},
+    chalfontLatimer: {x: ALIGN_LEFT, y: 80, labelSide: "left", stationId: "940GZZLUCAL"},
+    chorleywood: {x: ALIGN_LEFT, y: 120, labelSide: "left", stationId: "940GZZLUCYD"},
+    rickmansworth: {x: ALIGN_LEFT, y: 160, labelSide: "left", stationId: "940GZZLURKW"},
+
+    watford: {x: ALIGN_RIGHT, y: 120, labelSide: "right", stationId: "940GZZLUWAF"},
+    croxley: {x: ALIGN_RIGHT, y: 160, labelSide: "right", stationId: "940GZZLUCXY"},
+
+    moorPark: {x: ALIGN_RIGHT, y: 200, labelSide: "right", stationId: "940GZZLUMPK"},
+    northwood: {x: ALIGN_RIGHT, y: 270, labelSide: "right", stationId: "940GZZLUNOW"},
+    northwoodHills: {x: ALIGN_RIGHT, y: 340, labelSide: "right", stationId: "940GZZLUNWH"},
+    pinner: {x: ALIGN_RIGHT, y: 410, labelSide: "right", stationId: "940GZZLUPNR"},
+    northHarrow: {x: ALIGN_RIGHT, y: 480, labelSide: "right", stationId: "940GZZLUNHA"},
+
+    uxbridge: {x: ALIGN_LEFT, y: 200, labelSide: "left", stationId: "940GZZLUUXB"},
+    hillingdon: {x: ALIGN_LEFT, y: 240, labelSide: "left", stationId: "940GZZLUHGD"},
+    ickenham: {x: ALIGN_LEFT, y: 280, labelSide: "left", stationId: "940GZZLUICK"},
+    ruislip: {x: ALIGN_LEFT, y: 320, labelSide: "left", stationId: "940GZZLURSP"},
+    ruislipManor: {x: ALIGN_LEFT, y: 360, labelSide: "left", stationId: "940GZZLURSM"},
+    eastcote: {x: ALIGN_LEFT, y: 400, labelSide: "left", stationId: "940GZZLUEAE"},
+    raynersLane: {x: ALIGN_LEFT, y: 440, labelSide: "left", stationId: "940GZZLURYL"},
+    westHarrow: {x: ALIGN_LEFT, y: 480, labelSide: "left", stationId: "940GZZLUWHW"},
+    harrowOnTheHill: {x: ALIGN_LEFT, y: 520, labelSide: "left", stationId: "940GZZLUHOH"},
+
+    northwickPark: {x: ALIGN_LEFT, y: 560, labelSide: "left", stationId: "940GZZLUNKP"},
+    prestonRoad: {x: ALIGN_LEFT, y: 600, labelSide: "left", stationId: "940GZZLUPRD"},
+    wembleyPark: {x: ALIGN_LEFT, y: 640, labelSide: "left", stationId: "940GZZLUWYP"},
+    finchleyRoad: {x: ALIGN_LEFT, y: 680, labelSide: "left", stationId: "940GZZLUFYR"},
+    bakerStreet: {x: ALIGN_LEFT, y: 720, labelSide: "left", stationId: "940GZZLUBST"},
+    greatPortlandStreet: {x: ALIGN_LEFT, y: 760, labelSide: "left", stationId: "940GZZLUGPS"},
+    eustonSquare: {x: ALIGN_LEFT, y: 800, labelSide: "left", stationId: "940GZZLUESQ"},
+    kingsCrossStPancras: {x: ALIGN_LEFT, y: 840, labelSide: "left", stationId: "940GZZLUKSX"},
+    farringdon: {x: ALIGN_LEFT, y: 880, labelSide: "left", stationId: "940GZZLUFCN"},
+    barbican: {x: ALIGN_LEFT, y: 920, labelSide: "left", stationId: "940GZZLUBBN"},
+    moorgate: {x: ALIGN_LEFT, y: 960, labelSide: "left", stationId: "940GZZLUMGT"},
+    liverpoolStreet: {x: ALIGN_LEFT, y: 1000, labelSide: "left", stationId: "940GZZLULVT"},
+    aldgate: {x: ALIGN_LEFT, y: 1040, labelSide: "left", stationId: "940GZZLUALD"},
+  },
+  edges: [
+    ["amersham", "chalfontLatimer"],
+    ["chesham", "chalfontLatimer"],
+    ["chalfontLatimer", "chorleywood", "rickmansworth", "moorPark"],
+    ["watford", "croxley", "moorPark"],
+    ["moorPark", "northwood", "northwoodHills", "pinner", "northHarrow", "harrowOnTheHill"],
+    [
+      "uxbridge",
+      "hillingdon",
+      "ickenham",
+      "ruislip",
+      "ruislipManor",
+      "eastcote",
+      "raynersLane",
+      "westHarrow",
+      "harrowOnTheHill",
+    ],
+    [
+      "harrowOnTheHill",
+      "northwickPark",
+      "prestonRoad",
+      "wembleyPark",
+      "finchleyRoad",
+      "bakerStreet",
+      "greatPortlandStreet",
+      "eustonSquare",
+      "kingsCrossStPancras",
+      "farringdon",
+      "barbican",
+      "moorgate",
+      "liverpoolStreet",
+      "aldgate",
+    ],
+  ],
+};
+
+const northernLineLayout: LineLayout = {
   stationLocations: {
     // High Barnet branch
     highBarnet: {x: ALIGN_RIGHT, y: 40, labelSide: "right", stationId: "940GZZLUHBT"},
@@ -120,7 +453,6 @@ export const northernLineLayout: LineLayout = {
       "nineElms",
       "batterseaPowerStation",
     ],
-    // Bank branch
     [
       "camdenTown",
       "euston",
@@ -153,4 +485,202 @@ export const northernLineLayout: LineLayout = {
       endDirection: "left",
     },
   ],
+};
+
+const piccadillyLineLayout: LineLayout = {
+  stationLocations: {
+    uxbridge: {x: ALIGN_RIGHT, y: 40, labelSide: "right", stationId: "940GZZLUUXB"},
+    hillingdon: {x: ALIGN_RIGHT, y: 80, labelSide: "right", stationId: "940GZZLUHGD"},
+    ickenham: {x: ALIGN_RIGHT, y: 120, labelSide: "right", stationId: "940GZZLUICK"},
+    ruislip: {x: ALIGN_RIGHT, y: 160, labelSide: "right", stationId: "940GZZLURSP"},
+    ruislipManor: {x: ALIGN_RIGHT, y: 200, labelSide: "right", stationId: "940GZZLURSM"},
+    eastcote: {x: ALIGN_RIGHT, y: 240, labelSide: "right", stationId: "940GZZLUEAE"},
+    raynersLane: {x: ALIGN_RIGHT, y: 280, labelSide: "right", stationId: "940GZZLURYL"},
+    southHarrow: {x: ALIGN_RIGHT, y: 320, labelSide: "right", stationId: "940GZZLUSHH"},
+    sudburyHill: {x: ALIGN_RIGHT, y: 360, labelSide: "right", stationId: "940GZZLUSUH"},
+    sudburyTown: {x: ALIGN_RIGHT, y: 400, labelSide: "right", stationId: "940GZZLUSUT"},
+    alperton: {x: ALIGN_RIGHT, y: 440, labelSide: "right", stationId: "940GZZLUALP"},
+    parkRoyal: {x: ALIGN_RIGHT, y: 480, labelSide: "right", stationId: "940GZZLUPKR"},
+    northEaling: {x: ALIGN_RIGHT, y: 520, labelSide: "right", stationId: "940GZZLUNEN"},
+    ealingCommon: {x: ALIGN_RIGHT, y: 560, labelSide: "right", stationId: "940GZZLUECM"},
+    actonTown: {x: ALIGN_CENTER, y: 600, labelSide: "right", stationId: "940GZZLUACT"},
+    turnhamGreen: {x: ALIGN_CENTER, y: 640, labelSide: "right", stationId: "940GZZLUTNG"},
+    hammersmith: {x: ALIGN_CENTER, y: 680, labelSide: "right", stationId: "940GZZLUHSD"},
+    baronsCourt: {x: ALIGN_CENTER, y: 720, labelSide: "right", stationId: "940GZZLUBSC"},
+    earlsCourt: {x: ALIGN_CENTER, y: 760, labelSide: "right", stationId: "940GZZLUECT"},
+    gloucesterRoad: {x: ALIGN_CENTER, y: 800, labelSide: "right", stationId: "940GZZLUGTR"},
+    southKensington: {x: ALIGN_CENTER, y: 840, labelSide: "right", stationId: "940GZZLUSKS"},
+    knightsbridge: {x: ALIGN_CENTER, y: 880, labelSide: "right", stationId: "940GZZLUKNB"},
+    hydeParkCorner: {x: ALIGN_CENTER, y: 920, labelSide: "right", stationId: "940GZZLUHPC"},
+    greenPark: {x: ALIGN_CENTER, y: 960, labelSide: "right", stationId: "940GZZLUGPK"},
+    piccadillyCircus: {x: ALIGN_CENTER, y: 1000, labelSide: "right", stationId: "940GZZLUPCC"},
+    leicesterSquare: {x: ALIGN_CENTER, y: 1040, labelSide: "right", stationId: "940GZZLULSQ"},
+    coventGarden: {x: ALIGN_CENTER, y: 1080, labelSide: "right", stationId: "940GZZLUCGN"},
+    holborn: {x: ALIGN_CENTER, y: 1120, labelSide: "right", stationId: "940GZZLUHBN"},
+    russellSquare: {x: ALIGN_CENTER, y: 1160, labelSide: "right", stationId: "940GZZLURSQ"},
+    kingsCross: {x: ALIGN_CENTER, y: 1200, labelSide: "right", stationId: "940GZZLUKSX"},
+    caledonianRoad: {x: ALIGN_CENTER, y: 1240, labelSide: "right", stationId: "940GZZLUCAR"},
+    hollowayRoad: {x: ALIGN_CENTER, y: 1280, labelSide: "right", stationId: "940GZZLUHWY"},
+    arsenal: {x: ALIGN_CENTER, y: 1320, labelSide: "right", stationId: "940GZZLUASL"},
+    finsburyPark: {x: ALIGN_CENTER, y: 1360, labelSide: "right", stationId: "940GZZLUFPK"},
+    manorHouse: {x: ALIGN_CENTER, y: 1400, labelSide: "right", stationId: "940GZZLUMRH"},
+    turnpikeLane: {x: ALIGN_CENTER, y: 1440, labelSide: "right", stationId: "940GZZLUTPN"},
+    woodGreen: {x: ALIGN_CENTER, y: 1480, labelSide: "right", stationId: "940GZZLUWOG"},
+    boundsGreen: {x: ALIGN_CENTER, y: 1520, labelSide: "right", stationId: "940GZZLUBDS"},
+    arnosGrove: {x: ALIGN_CENTER, y: 1560, labelSide: "right", stationId: "940GZZLUASG"},
+    southgate: {x: ALIGN_CENTER, y: 1600, labelSide: "right", stationId: "940GZZLUSGT"},
+    oakwood: {x: ALIGN_CENTER, y: 1640, labelSide: "right", stationId: "940GZZLUOAK"},
+    cockfosters: {x: ALIGN_CENTER, y: 1680, labelSide: "right", stationId: "940GZZLUCKS"},
+    heathrowT5: {x: ALIGN_LEFT, y: 200, labelSide: "left", stationId: "940GZZLUHR5"},
+    heathrowT23: {x: ALIGN_LEFT, y: 240, labelSide: "left", stationId: "940GZZLUHRC"},
+    hattonCross: {x: ALIGN_LEFT, y: 280, labelSide: "left", stationId: "940GZZLUHNX"},
+    hounslowWest: {x: ALIGN_LEFT, y: 320, labelSide: "left", stationId: "940GZZLUHWT"},
+    hounslowCentral: {x: ALIGN_LEFT, y: 360, labelSide: "left", stationId: "940GZZLUHWC"},
+    hounslowEast: {x: ALIGN_LEFT, y: 400, labelSide: "left", stationId: "940GZZLUHWE"},
+    osterley: {x: ALIGN_LEFT, y: 440, labelSide: "left", stationId: "940GZZLUOSY"},
+    bostonManor: {x: ALIGN_LEFT, y: 480, labelSide: "left", stationId: "940GZZLUBOS"},
+    northfields: {x: ALIGN_LEFT, y: 520, labelSide: "left", stationId: "940GZZLUNFD"},
+    southEaling: {x: ALIGN_LEFT, y: 560, labelSide: "left", stationId: "940GZZLUSEA"},
+  },
+  edges: [
+    [
+      "uxbridge",
+      "hillingdon",
+      "ickenham",
+      "ruislip",
+      "ruislipManor",
+      "eastcote",
+      "raynersLane",
+      "southHarrow",
+      "sudburyHill",
+      "sudburyTown",
+      "alperton",
+      "parkRoyal",
+      "northEaling",
+      "ealingCommon",
+      "actonTown",
+    ],
+    [
+      "actonTown",
+      "turnhamGreen",
+      "hammersmith",
+      "baronsCourt",
+      "earlsCourt",
+      "gloucesterRoad",
+      "southKensington",
+      "knightsbridge",
+      "hydeParkCorner",
+      "greenPark",
+      "piccadillyCircus",
+      "leicesterSquare",
+      "coventGarden",
+      "holborn",
+      "russellSquare",
+      "kingsCross",
+      "caledonianRoad",
+      "hollowayRoad",
+      "arsenal",
+      "finsburyPark",
+      "manorHouse",
+      "turnpikeLane",
+      "woodGreen",
+      "boundsGreen",
+      "arnosGrove",
+      "southgate",
+      "oakwood",
+      "cockfosters",
+    ],
+    [
+      "heathrowT5",
+      "heathrowT23",
+      "hattonCross",
+      "hounslowWest",
+      "hounslowCentral",
+      "hounslowEast",
+      "osterley",
+      "bostonManor",
+      "northfields",
+      "southEaling",
+      "actonTown",
+    ],
+  ],
+  spurs: [
+    {
+      stationName: "hattonCross",
+      startDirection: "up",
+      endDirection: "right",
+    },
+    {
+      stationName: "heathrowT23",
+      startDirection: "up",
+      endDirection: "right",
+    },
+  ],
+};
+
+const customLayouts: {[line: string]: LineLayout} = {
+  central: centralLineLayout,
+  district: districtLineLayout,
+  metropolitan: metropolitanLineLayout,
+  northern: northernLineLayout,
+  piccadilly: piccadillyLineLayout,
+};
+
+export const getLineLayout = (line: string, route: TflRouteApiResponse) => {
+  if (line in customLayouts) {
+    return customLayouts[line];
+  }
+
+  const yOffset = 40;
+  let y = 10;
+  const x = 70;
+  const stationLocations: LineLayout["stationLocations"] = {};
+  const spurs: LineLayout["spurs"] = [];
+  const path: string[] = [];
+
+  for (const stops of route.stopPointSequences) {
+    if (path.length === 0) {
+      if (stops.prevBranchIds.length > 0) {
+        console.error("Unimplemented: First entry had preceding branches");
+      }
+      // fallthrough
+    } else if (stops.stopPoint[0].stationId !== path[path.length - 1]) {
+      // Not a continuation of what we have already - add it as a spur as needed
+      if (stops.stopPoint[0].stationId in stationLocations) {
+        spurs.push({
+          stationName: stops.stopPoint[0].stationId,
+          startDirection: "down",
+          endDirection: "left",
+        });
+      }
+      if (stops.stopPoint[stops.stopPoint.length - 1].stationId in stationLocations) {
+        spurs.push({
+          stationName: stops.stopPoint[stops.stopPoint.length - 1].stationId,
+          startDirection: "up",
+          endDirection: "left",
+        });
+      }
+      continue;
+    }
+
+    for (const stop of stops.stopPoint) {
+      if (stop.stationId in stationLocations) {
+        continue;
+      }
+      stationLocations[stop.stationId] = {
+        x,
+        y,
+        labelSide: "right",
+        stationId: stop.stationId,
+      };
+      path.push(stop.stationId);
+      y += yOffset;
+    }
+  }
+
+  return {
+    stationLocations,
+    spurs,
+    edges: [path],
+  };
 };
