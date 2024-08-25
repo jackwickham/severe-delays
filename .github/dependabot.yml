@@ -6,6 +6,12 @@ updates:
       interval: "daily"
       time: "19:00"
       timezone: "Europe/London"
+  - package-ecosystem: cargo
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "19:00"
+      timezone: Europe/London
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
