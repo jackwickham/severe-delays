@@ -6,7 +6,7 @@ import {type LineStatusEntry, type Status} from "../api/types";
 import {Button} from "../components/Button";
 import {SplitButton} from "../components/SplitButton";
 import {Settings, createSettingsStore} from "./Settings";
-import {lineColors} from "../constants";
+import {lineConfigs} from "../constants";
 
 export const LineHistory: Component = () => {
   const [duration, setDuration] = createSignal(1000 * 60 * 60 * 4);
@@ -48,7 +48,7 @@ export const LineHistory: Component = () => {
           })),
           overallState: getOverallState(status.entries, settingsStore),
         })),
-        color: lineColors[lineId],
+        color: lineConfigs[lineId].color,
         name: lineId,
         mode: metadata.mode,
       });

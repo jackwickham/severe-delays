@@ -2,7 +2,7 @@ import {A, useParams} from "@solidjs/router";
 import {createResource, type Component, createMemo, For, type JSX, onCleanup, Show} from "solid-js";
 import {TrainIndicator} from "./TrainIndicator";
 import type {Direction, Location, Station, Stations, Train} from "./types";
-import {lineColors} from "../constants";
+import {lineConfigs} from "../constants";
 import {parseLocation} from "./locationParser";
 import {Button} from "../components/Button";
 import feather from "feather-icons";
@@ -37,8 +37,10 @@ export const LiveLineView: Component = () => {
   let refreshIndicator: SVGAnimateElement | undefined;
   const routeParams = useParams();
   const line = routeParams.line;
+  const lineConfig = lineConfigs[line];
+  const direction = lineConfig.direction || "outbound";
   const [routeApiResponse] = createResource(async (): Promise<TflRouteApiResponse | null> => {
-    const resp = await fetch(`https://api.tfl.gov.uk/Line/${line}/Route/Sequence/outbound`);
+    const resp = await fetch(`https://api.tfl.gov.uk/Line/${line}/Route/Sequence/${direction}`);
     if (resp.status >= 400) {
       return null;
     }
@@ -144,6 +146,15 @@ export const LiveLineView: Component = () => {
     return stations;
   });
 
+  const pathParts = [
+    ["940GZZLUEGW", "940GZZLUCTN"], // Edgware to Camden
+    ["940GZZLUHBT", "940GZZLUCTN"], // High Barnet to Camden
+    ["940GZZLUCTN", "HUBBAN", "940GZZLUKNG"], // Camden to Kennington via Bank
+    ["940GZZLUCTN", "HUBCHX", "940GZZLUKNG"], // Camden to Kennington via Charing Cross
+    ["940GZZLUKNG", "940GZZLUMDN"], // Kennington to Morden
+    ["940GZZLUKNG", "940GZZBPSUST"], // Kennington to Battersea Power Station
+  ];
+
   const pathComputer = createMemo(
     (): [string, number, JSX.Element[], {[stationId: string]: {y: number}}] => {
       const roots = Object.values(stations()).filter(
@@ -152,9 +163,10 @@ export const LiveLineView: Component = () => {
       let node = roots[0];
       const yOffset = 40;
       let y = 10;
-      const path = [`M 70 ${y}`];
+      const x = 70;
+      const path = [`M ${x} ${y}`];
       const labels: JSX.Element[] = [];
-      const stationLocations: {[stationId: string]: {y: number}} = {};
+      const stationLocations: {[stationId: string]: {x: number; y: number}} = {};
       let isFirstNode = true;
       while (node) {
         if (node.id in stationLocations) {
@@ -162,6 +174,7 @@ export const LiveLineView: Component = () => {
           break;
         }
         stationLocations[node.id] = {
+          x,
           y,
         };
         if (node.predecessors.length > 1) {
@@ -173,7 +186,7 @@ export const LiveLineView: Component = () => {
           path.push(`l 10 0 m -10 0`);
         }
         labels.push(
-          <text x="85" y={y + 5}>
+          <text x={x + 55} y={y + 5}>
             {node.friendlyName} &nbsp;
             <tspan class="fill-slate-500 text-sm">
               {`${
@@ -229,7 +242,12 @@ export const LiveLineView: Component = () => {
           direction:
             resp.direction ||
             (parsedLocation &&
-              maybeInferDirection(parsedLocation, resp.destinationNaptanId, stations())) ||
+              maybeInferDirection(
+                parsedLocation,
+                resp.destinationNaptanId,
+                stations(),
+                direction
+              )) ||
             existing?.direction,
           location: parsedLocation || existing?.location,
           destination: resp.towards,
@@ -239,7 +257,7 @@ export const LiveLineView: Component = () => {
     return fillInMissingDirections(Object.values(res), stations());
   });
 
-  const lineColor = lineColors[line] || {r: 0, g: 0, b: 0};
+  const lineColor = lineConfig?.color || {r: 0, g: 0, b: 0};
 
   return (
     <>
@@ -317,14 +335,15 @@ export const LiveLineView: Component = () => {
                     `Train with no direction. Destination=${train.destination}, location=${train.currentLocation}`
                   );
                 }
-                const offsetMultiplier = train.direction === "inbound" ? -1 : 1;
-                const x = train.direction === "inbound" ? 10 : 35;
+                const offsetMultiplier = train.direction === direction ? 1 : -1;
+                const x = (train.direction === direction ? 10 : 28) + 83;
                 if (location.type === "at" && location.station in stationLocations()) {
                   return (
                     <TrainIndicator
                       x={x}
                       y={stationLocations()[location.station].y}
                       train={train}
+                      mapDirection={direction}
                     />
                   );
                 } else if (location.type === "leaving" && location.station in stationLocations()) {
@@ -333,6 +352,7 @@ export const LiveLineView: Component = () => {
                       x={x}
                       y={stationLocations()[location.station].y + 1 * offsetMultiplier}
                       train={train}
+                      mapDirection={direction}
                     />
                   );
                 } else if (location.type === "left" && location.station in stationLocations()) {
@@ -341,6 +361,7 @@ export const LiveLineView: Component = () => {
                       x={x}
                       y={stationLocations()[location.station].y + 4 * offsetMultiplier}
                       train={train}
+                      mapDirection={direction}
                     />
                   );
                 } else if (
@@ -352,6 +373,7 @@ export const LiveLineView: Component = () => {
                       x={x}
                       y={stationLocations()[location.station].y - 4 * offsetMultiplier}
                       train={train}
+                      mapDirection={direction}
                     />
                   );
                 } else if (
@@ -368,6 +390,7 @@ export const LiveLineView: Component = () => {
                         2
                       }
                       train={train}
+                      mapDirection={direction}
                     />
                   );
                 }
@@ -385,20 +408,22 @@ export const LiveLineView: Component = () => {
 const maybeInferDirection = (
   location: Location,
   destination: string,
-  stations: Stations
+  stations: Stations,
+  direction: Direction
 ): Direction | null => {
+  const oppositeDirection: Direction = direction === "inbound" ? "outbound" : "inbound";
   if (stations[destination]?.predecessors.length === 0) {
-    return "inbound";
+    return oppositeDirection;
   } else if (stations[destination]?.successors.length === 0) {
-    return "outbound";
+    return direction;
   }
 
   switch (location.type) {
     case "between": {
       if (stations[location.startStation]?.successors.includes(location.endStation)) {
-        return "outbound";
+        return direction;
       } else if (stations[location.startStation]?.predecessors.includes(location.endStation)) {
-        return "inbound";
+        return oppositeDirection;
       }
       break;
     }
@@ -407,9 +432,9 @@ const maybeInferDirection = (
     case "leaving":
     case "left": {
       if (stations[location.station]?.successors.includes(destination)) {
-        return "outbound";
+        return direction;
       } else if (stations[location.station]?.predecessors.includes(destination)) {
-        return "inbound";
+        return oppositeDirection;
       }
       break;
     }

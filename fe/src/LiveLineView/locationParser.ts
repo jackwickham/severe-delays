@@ -4,9 +4,10 @@ const atRe = /^At (.+?)(?: (?:Platform |P).*)?$/;
 const leavingRe = /^(?:Leaving|Departing) (.+?)(?: (?:Platform |P).*)?$/;
 const leftRe = /^(?:Left|Departed) (.+?)(?: (?:Platform |P).*)?$/;
 const betweenRe = /^(?:In between|Between) (.+) and (.+)$/;
-const approachingRe = /^Approaching (.+?)(?: (?:Platform |P).*)?$/;
-const knownEdgeCases = /^.* (Sidings?|Depot)$/;
-const todo = /^$|^Near (.*)$|^(.*) [aA]rea( fast)?$|^(North|South) of (.*)$/;
+const approachingRe = /^Approachih?ng (.+?)(?: (?:Platform |P).*)?$/;
+const atFallback = /^(.+?) Platform .*$/;
+const knownEdgeCases = /^.* (Sidings?|Depot|Loop)$/;
+const todo = /^$|^Near (.*)$|^(.*) [aA]rea( fast)?$|^(North|South) of (.*)$|^Around (.*)$/;
 
 export const parseLocation = (currentLocation: string, stations: Stations): Location | null => {
   let matches;
@@ -33,10 +34,11 @@ export const parseLocation = (currentLocation: string, stations: Stations): Loca
     };
   } else if ((matches = approachingRe.exec(currentLocation)) !== null) {
     return constructLocation("approaching", matches[1], stations);
+  } else if ((matches = atFallback.exec(currentLocation)) !== null) {
+    return constructLocation("at", matches[1], stations);
   } else if (knownEdgeCases.test(currentLocation) || todo.test(currentLocation)) {
     return null;
   } else {
-    // Handle unrecognized location format
     console.warn(`Unrecognized location format: ${currentLocation}`);
     return null;
   }

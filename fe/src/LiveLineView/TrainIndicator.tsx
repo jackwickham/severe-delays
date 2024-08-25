@@ -1,14 +1,15 @@
 import type {Component} from "solid-js";
-import type {Train} from "./types";
+import type {Direction, Train} from "./types";
 
 interface TrainProps {
   x: number;
   y: number;
   train: Train;
+  mapDirection: Direction;
 }
 
 export const TrainIndicator: Component<TrainProps> = (props: TrainProps) => {
-  const up = props.train.direction === "inbound";
+  const up = props.train.direction !== props.mapDirection;
   const directionMultiplier = up ? -1 : 1;
   const path =
     `M ${props.x - 4.2} ${props.y + 4.2 * directionMultiplier} ` +
