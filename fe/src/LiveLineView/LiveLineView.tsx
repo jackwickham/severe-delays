@@ -34,7 +34,7 @@ export const LiveLineView: Component = () => {
     return await resp.json();
   });
 
-  let refreshTimeout: NodeJS.Timeout | undefined;
+  let refreshTimeout: number | undefined;
   let lastRefreshed = Date.now();
   let visible = true;
   const [arrivalsApiResponse, {refetch: refreshArrivals}] = createResource(
