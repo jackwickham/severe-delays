@@ -6,7 +6,7 @@ const leftRe = /^(?:Left|Departed) (.+?)(?: (?:Platform |P).*)?$/;
 const betweenRe = /^(?:In between|Between) (.+) and (.+)$/;
 const approachingRe = /^Approachih?ng (.+?)(?: (?:Platform |P).*)?$/;
 const atFallback = /^(.+?) Platform .*$/;
-const knownEdgeCases = /^.* (Sidings?|Depot|Loop)$/;
+const knownEdgeCases = /^.* (Sidings?|Depot|Loop|Crossover)$/;
 const todo = /^$|^Near (.*)$|^(.*) [aA]rea( fast)?$|^(North|South) of (.*)$|^Around (.*)$/;
 
 export const parseLocation = (currentLocation: string, stations: Stations): Location | null => {
@@ -84,6 +84,7 @@ const SPECIAL_CASES = {
   "st john wood": "st johns wood",
   "willlesden green": "willesden green",
   castle: "elephant and castle",
+  kenntington: "kennington",
 };
 
 // There are a bunch of inconsistencies in station naming, even for different locations within the same data

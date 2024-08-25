@@ -6,6 +6,7 @@ import {lineConfigs} from "../constants";
 import {parseLocation} from "./locationParser";
 import {Button} from "../components/Button";
 import feather from "feather-icons";
+import {northernLineLayout} from "./lineLayouts";
 
 interface TflRouteApiResponse {
   stations: [];
@@ -146,17 +147,59 @@ export const LiveLineView: Component = () => {
     return stations;
   });
 
-  const pathParts = [
-    ["940GZZLUEGW", "940GZZLUCTN"], // Edgware to Camden
-    ["940GZZLUHBT", "940GZZLUCTN"], // High Barnet to Camden
-    ["940GZZLUCTN", "HUBBAN", "940GZZLUKNG"], // Camden to Kennington via Bank
-    ["940GZZLUCTN", "HUBCHX", "940GZZLUKNG"], // Camden to Kennington via Charing Cross
-    ["940GZZLUKNG", "940GZZLUMDN"], // Kennington to Morden
-    ["940GZZLUKNG", "940GZZBPSUST"], // Kennington to Battersea Power Station
-  ];
-
   const pathComputer = createMemo(
-    (): [string, number, JSX.Element[], {[stationId: string]: {y: number}}] => {
+    (): [
+      string,
+      number,
+      JSX.Element[],
+      {[stationId: string]: {x: number; y: number; labelSide: "left" | "right"}},
+    ] => {
+      if (line === "northern") {
+        let path = northernLineLayout.edges
+          .map((edge) => {
+            const vertices = edge.map((vertex) => northernLineLayout.stationLocations[vertex]);
+            const components = [`M ${vertices[0].x} ${vertices[0].y}`];
+            for (let i = 1; i < vertices.length; i++) {
+              components.push(
+                `C ${vertices[i - 1].x},${vertices[i - 1].y + 20} ${vertices[i].x},${
+                  vertices[i].y - 20
+                } ${vertices[i].x},${vertices[i].y}`
+              );
+            }
+            return components.join(" ");
+          })
+          .join(" ");
+        const labelMarkers = Object.values(northernLineLayout.stationLocations)
+          .map((loc) => `M ${loc.x} ${loc.y} l ${loc.labelSide === "left" ? -10 : 10} 0`)
+          .join(" ");
+        const spurs = (northernLineLayout.spurs || []).map((spur) => {
+          const start = northernLineLayout.stationLocations[spur.stationName];
+          const vSign = spur.startDirection === "up" ? "-" : "";
+          const hSign = spur.endDirection === "left" ? "-" : "";
+          return `M ${start.x} ${start.y} c 0 ${vSign}7, ${hSign}7 ${vSign}12, ${hSign}12 ${vSign}12`;
+        });
+        const labels = Object.values(northernLineLayout.stationLocations).map((location) => (
+          <text
+            x={location.x + (location.labelSide === "left" ? -55 : 55)}
+            y={location.y + 5}
+            text-anchor={location.labelSide === "left" ? "end" : "start"}
+          >
+            {stations()[location.stationId]?.friendlyName}
+          </text>
+        ));
+        return [
+          `${path} ${labelMarkers} ${spurs}`,
+          1400,
+          labels,
+          Object.fromEntries(
+            Object.values(northernLineLayout.stationLocations).map((location) => [
+              location.stationId,
+              location,
+            ])
+          ),
+        ];
+      }
+
       const roots = Object.values(stations()).filter(
         (station) => station.predecessors.length === 0
       );
@@ -166,7 +209,9 @@ export const LiveLineView: Component = () => {
       const x = 70;
       const path = [`M ${x} ${y}`];
       const labels: JSX.Element[] = [];
-      const stationLocations: {[stationId: string]: {x: number; y: number}} = {};
+      const stationLocations: {
+        [stationId: string]: {x: number; y: number; labelSide: "left" | "right"};
+      } = {};
       let isFirstNode = true;
       while (node) {
         if (node.id in stationLocations) {
@@ -176,6 +221,7 @@ export const LiveLineView: Component = () => {
         stationLocations[node.id] = {
           x,
           y,
+          labelSide: "right",
         };
         if (node.predecessors.length > 1) {
           path.push("c 0 -7, -7 -12, -12 -12 m 12 12");
@@ -312,7 +358,7 @@ export const LiveLineView: Component = () => {
           </div>
           <svg
             height={svgHeight()}
-            viewBox={`0 0 380 ${svgHeight()}`}
+            viewBox={`0 0 600 ${svgHeight()}`}
             preserveAspectRatio="xMidYMin meet"
             class="max-w-full"
           >
@@ -335,31 +381,34 @@ export const LiveLineView: Component = () => {
                     `Train with no direction. Destination=${train.destination}, location=${train.currentLocation}`
                   );
                 }
-                const offsetMultiplier = train.direction === direction ? 1 : -1;
-                const x = (train.direction === direction ? 10 : 28) + 83;
+                const yOffsetMultiplier = train.direction === direction ? 1 : -1;
+                const xOffset = train.direction === direction ? 23 : 41;
                 if (location.type === "at" && location.station in stationLocations()) {
+                  const station = stationLocations()[location.station];
                   return (
                     <TrainIndicator
-                      x={x}
-                      y={stationLocations()[location.station].y}
+                      x={station.x + xOffset * (station.labelSide === "left" ? -1 : 1)}
+                      y={station.y}
                       train={train}
                       mapDirection={direction}
                     />
                   );
                 } else if (location.type === "leaving" && location.station in stationLocations()) {
+                  const station = stationLocations()[location.station];
                   return (
                     <TrainIndicator
-                      x={x}
-                      y={stationLocations()[location.station].y + 1 * offsetMultiplier}
+                      x={station.x + xOffset * (station.labelSide === "left" ? -1 : 1)}
+                      y={station.y + 1 * yOffsetMultiplier}
                       train={train}
                       mapDirection={direction}
                     />
                   );
                 } else if (location.type === "left" && location.station in stationLocations()) {
+                  const station = stationLocations()[location.station];
                   return (
                     <TrainIndicator
-                      x={x}
-                      y={stationLocations()[location.station].y + 4 * offsetMultiplier}
+                      x={station.x + xOffset * (station.labelSide === "left" ? -1 : 1)}
+                      y={station.y + 4 * yOffsetMultiplier}
                       train={train}
                       mapDirection={direction}
                     />
@@ -368,10 +417,11 @@ export const LiveLineView: Component = () => {
                   location.type === "approaching" &&
                   location.station in stationLocations()
                 ) {
+                  const station = stationLocations()[location.station];
                   return (
                     <TrainIndicator
-                      x={x}
-                      y={stationLocations()[location.station].y - 4 * offsetMultiplier}
+                      x={station.x + xOffset * (station.labelSide === "left" ? -1 : 1)}
+                      y={station.y - 4 * yOffsetMultiplier}
                       train={train}
                       mapDirection={direction}
                     />
@@ -381,14 +431,18 @@ export const LiveLineView: Component = () => {
                   location.startStation in stationLocations() &&
                   location.endStation in stationLocations()
                 ) {
+                  const startStation = stationLocations()[location.startStation];
+                  const endStation = stationLocations()[location.endStation];
                   return (
                     <TrainIndicator
-                      x={x}
-                      y={
-                        (stationLocations()[location.startStation].y +
-                          stationLocations()[location.endStation].y) /
-                        2
+                      x={
+                        (startStation.x + endStation.x) / 2 +
+                        xOffset *
+                          (startStation.labelSide === "left" || endStation.labelSide === "left"
+                            ? -1
+                            : 1)
                       }
+                      y={(startStation.y + endStation.y) / 2}
                       train={train}
                       mapDirection={direction}
                     />
