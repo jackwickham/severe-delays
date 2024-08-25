@@ -1,8 +1,7 @@
 import type {Component, JSX} from "solid-js";
-import {LineHistory} from "./LineHistory";
 import logo from "./assets/logo-64.png";
 
-const App: Component<{children: JSX.Element}> = (props) => {
+const App: Component<{children?: JSX.Element}> = (props) => {
   return (
     <div class="">
       <header class="bg-slate-800 text-slate-100 h-12 w-full flex flex-row items-center justify-center text-lg">
