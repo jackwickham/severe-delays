@@ -1,11 +1,8 @@
-import type {Component} from "solid-js";
+import type {Component, JSX} from "solid-js";
 import {LineHistory} from "./LineHistory";
 import logo from "./assets/logo-64.png";
-import {Route, Routes} from "@solidjs/router";
-import {LiveLineView} from "./LiveLineView";
-import {NotFound} from "./NotFound";
 
-const App: Component = () => {
+const App: Component<{children: JSX.Element}> = (props) => {
   return (
     <div class="">
       <header class="bg-slate-800 text-slate-100 h-12 w-full flex flex-row items-center justify-center text-lg">
@@ -16,13 +13,7 @@ const App: Component = () => {
           </div>
         </div>
       </header>
-      <div class="p-4 max-w-7xl mx-auto">
-        <Routes>
-          <Route path="/" component={LineHistory} />
-          <Route path="/live/:line" component={LiveLineView} />
-          <Route path="*" component={NotFound} />
-        </Routes>
-      </div>
+      <div class="p-4 max-w-7xl mx-auto">{props.children}</div>
     </div>
   );
 };
