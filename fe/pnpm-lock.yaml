@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@solidjs/router':
         specifier: ^0.14.3
-        version: 0.14.5(solid-js@1.9.1)
+        version: 0.14.7(solid-js@1.9.1)
       feather-icons:
         specifier: ^4.29.1
         version: 4.29.2
@@ -497,8 +497,8 @@ packages:
     peerDependencies:
       solid-js: ^1.6.12
 
-  '@solidjs/router@0.14.5':
-    resolution: {integrity: sha512-J8ZMntnkDvNCSO9n4HyhlQlGdxYa1mandQLt5LMd0YiWAXGlYzjj+bB+OVtzsH1woWfoEJlVnBnGkMpf2lY/ig==}
+  '@solidjs/router@0.14.7':
+    resolution: {integrity: sha512-agLf8AUz5XnW6+F64a4Iq+QQQobI5zGHQ/gUYd/WHSwcbnFpavbsiwRLob3YhWMXVX3sQyn4ekUN+uchMCRupw==}
     peerDependencies:
       solid-js: ^1.8.6
 
@@ -1462,7 +1462,7 @@ snapshots:
     dependencies:
       solid-js: 1.9.1
 
-  '@solidjs/router@0.14.5(solid-js@1.9.1)':
+  '@solidjs/router@0.14.7(solid-js@1.9.1)':
     dependencies:
       solid-js: 1.9.1
 
