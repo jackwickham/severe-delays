@@ -1,4 +1,4 @@
-import {For, type Component, createResource, createSignal} from "solid-js";
+import {For, type Component, createResource, createSignal, Show} from "solid-js";
 import {type HistoryEntry, Line} from "./Line";
 import {State} from "./types";
 import {loadStatuses} from "../api/api";
@@ -7,6 +7,14 @@ import {Button} from "../components/Button";
 import {SplitButton} from "../components/SplitButton";
 import {Settings, createSettingsStore} from "./Settings";
 import {lineConfigs} from "../constants";
+
+interface LineEntry {
+  statusHistory: HistoryEntry[];
+  color?: {r: number; g: number; b: number};
+  name: string;
+  mode?: string;
+  favourite: boolean;
+}
 
 export const LineHistory: Component = () => {
   const [duration, setDuration] = createSignal(1000 * 60 * 60 * 4);
@@ -32,12 +40,7 @@ export const LineHistory: Component = () => {
     if (!resp) {
       return [];
     }
-    const result: {
-      statusHistory: HistoryEntry[];
-      color?: {r: number; g: number; b: number};
-      name: string;
-      mode?: string;
-    }[] = [];
+    const result: LineEntry[] = [];
     for (const [lineId, {history: historyEntries, metadata}] of Object.entries(resp)) {
       result.push({
         statusHistory: historyEntries.map((status) => ({
@@ -51,11 +54,30 @@ export const LineHistory: Component = () => {
         color: lineConfigs[lineId].color,
         name: lineId,
         mode: metadata.mode,
+        favourite: settingsStore.favouriteLines.includes(lineId),
       });
     }
     result.sort((a, b) => a.name.localeCompare(b.name));
     return result;
   };
+  const LineRenderer: Component<{line: LineEntry}> = (props) => (
+    <Line
+      name={props.line.name}
+      statusHistory={props.line.statusHistory}
+      color={props.line.color}
+      displayRange={displayRange()}
+      mode={props.line.mode}
+      favourite={props.line.favourite}
+      toggleFavourite={() =>
+        props.line.favourite
+          ? setSettingsStore("favouriteLines", (favouriteLines) =>
+              favouriteLines.filter((l) => l !== props.line.name)
+            )
+          : setSettingsStore("favouriteLines", settingsStore.favouriteLines.length, props.line.name)
+      }
+    />
+  );
+
   return (
     <>
       <div class="flex flex-row justify-end space-x-4 text-sm mb-4">
@@ -96,18 +118,33 @@ export const LineHistory: Component = () => {
               : "Refresh"}
         </Button>
       </div>
-      <div class="space-y-6 mb-20">
-        <For each={lines()}>
-          {(line) => (
-            <Line
-              name={line.name}
-              statusHistory={line.statusHistory}
-              color={line.color}
-              displayRange={displayRange()}
-              mode={line.mode}
-            />
-          )}
-        </For>
+      <div class="space-y-10 mb-20">
+        <Show when={settingsStore.favouriteLines.length > 0}>
+          <div>
+            <h2 class="text-2xl font-medium mb-4">Favourites</h2>
+            <div class="space-y-6">
+              <For each={lines()}>
+                {(line) => (
+                  <Show when={line.favourite}>
+                    <LineRenderer line={line} />
+                  </Show>
+                )}
+              </For>
+            </div>
+          </div>
+        </Show>
+        <div>
+          <h2 class="text-2xl font-medium mb-4">All lines</h2>
+          <div class="space-y-6">
+            <For each={lines()}>
+              {(line) => (
+                <Show when={!line.favourite}>
+                  <LineRenderer line={line} />
+                </Show>
+              )}
+            </For>
+          </div>
+        </div>
       </div>
     </>
   );

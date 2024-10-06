@@ -4,10 +4,15 @@ import {Button} from "../components/Button";
 import {Popover} from "../Popover";
 import feather from "feather-icons";
 
+const LOCAL_STORAGE_KEY = "settings";
+
 export interface Settings {
   includeClosedInStats: boolean;
   includePlannedClosuresInStats: boolean;
+  favouriteLines: string[];
 }
+
+type SerializedSettings = Partial<Settings>;
 
 export interface SettingsProps {
   store: Store<Settings>;
@@ -96,8 +101,28 @@ const SettingsPopoverContent: Component<SettingsProps> = (props) => {
   );
 };
 
-export const createSettingsStore = () =>
-  createStore<Settings>({
-    includeClosedInStats: true,
-    includePlannedClosuresInStats: true,
-  });
+export const createSettingsStore: () => [Settings, SetStoreFunction<Settings>] = () => {
+  let existingSettings: SerializedSettings;
+  try {
+    existingSettings = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) ?? "{}");
+  } catch (e) {
+    console.warn("Failed to read settings", e);
+    existingSettings = {};
+  }
+  const settingsWithDefaults: Settings = Object.assign(
+    {
+      includeClosedInStats: true,
+      includePlannedClosuresInStats: true,
+      favouriteLines: [],
+    },
+    existingSettings
+  );
+
+  const [store, setStore] = createStore<Settings>(settingsWithDefaults);
+  createEffect(() => updatePersistedSettings(store));
+  return [store, setStore];
+};
+
+const updatePersistedSettings = (settings: Settings) => {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settings));
+};

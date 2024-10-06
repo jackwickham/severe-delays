@@ -24,6 +24,8 @@ export interface LineProps {
     b: number;
   };
   mode?: string;
+  favourite: boolean;
+  toggleFavourite: () => void;
 }
 
 interface RenderedHistoryEntry {
@@ -144,7 +146,7 @@ export const Line: Component<LineProps> = (props: LineProps) => {
       >
         <div class="flex flex-row justify-between items-center">
           <div>
-            <h2 class="text-2xl mb-2">
+            <h3 class="text-2xl mb-2">
               <Show when={props.color}>
                 <div
                   class="inline-block w-4 h-4 rounded-full mr-2"
@@ -154,7 +156,7 @@ export const Line: Component<LineProps> = (props: LineProps) => {
                 ></div>
               </Show>
               {props.name}
-            </h2>
+            </h3>
             <div class="flex flex-row flex-wrap justify-after text-sm text-slate-500 space-x-3 mb-2">
               <p>Performance: </p>
               <For each={performanceStats()}>
@@ -170,6 +172,20 @@ export const Line: Component<LineProps> = (props: LineProps) => {
             </div>
           </div>
           <div class="flex flex-row gap-x-2">
+            <Button
+              rounded={false}
+              padded={false}
+              class="rounded-full w-8 h-8 p-0"
+              onClick={props.toggleFavourite}
+            >
+              <span
+                class="flex justify-around"
+                innerHTML={feather.icons["star"].toSvg({
+                  width: 16,
+                  fill: props.favourite ? "currentColor" : "none",
+                })}
+              />
+            </Button>
             <Show when={props.mode === "tube"}>
               <A href={`/live/${props.name}`} title="Current train locations">
                 <Button rounded={false} padded={false} class="rounded-full w-8 h-8 p-0">
