@@ -149,11 +149,15 @@ export const Line: Component<LineProps> = (props: LineProps) => {
             <h3 class="text-2xl mb-2">
               <Show when={props.color}>
                 <div
-                  class="inline-block w-4 h-4 rounded-full mr-2"
+                  class="w-4 h-4 rounded-full mr-2 inline-flex items-center justify-center relative"
                   style={`background-color: rgb(${props.color!.r}, ${props.color!.g}, ${
                     props.color!.b
                   })`}
-                ></div>
+                >
+                  <Show when={props.mode === "overground"}>
+                    <div class="h-1.5 w-full bg-page-background absolute"></div>
+                  </Show>
+                </div>
               </Show>
               {props.name}
             </h3>

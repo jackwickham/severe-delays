@@ -51,7 +51,7 @@ export const LineHistory: Component = () => {
           })),
           overallState: getOverallState(status.entries, settingsStore),
         })),
-        color: lineConfigs[lineId].color,
+        color: lineConfigs[lineId]?.color,
         name: lineId,
         mode: metadata.mode,
         favourite: settingsStore.favouriteLines.includes(lineId),

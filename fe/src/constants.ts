@@ -1,6 +1,8 @@
 // Colours from https://content.tfl.gov.uk/tfl-colour-standard-issue-08.pdf
 export const lineConfigs: {
-  [line: string]: {color: {r: number; g: number; b: number}; direction?: "inbound" | "outbound"};
+  [line: string]:
+    | {color: {r: number; g: number; b: number}; direction?: "inbound" | "outbound"}
+    | undefined;
 } = {
   bakerloo: {color: {r: 166, g: 90, b: 42}, direction: "inbound"},
   central: {color: {r: 255, g: 37, b: 27}, direction: "outbound"},
@@ -16,4 +18,10 @@ export const lineConfigs: {
   elizabeth: {color: {r: 119, g: 61, b: 189}},
   "london-overground": {color: {r: 238, g: 118, b: 35}},
   dlr: {color: {r: 0, g: 175, b: 170}},
+  liberty: {color: {r: 103, g: 103, b: 103}},
+  lioness: {color: {r: 241, g: 180, b: 28}},
+  mildmay: {color: {r: 67, g: 126, b: 193}},
+  suffragette: {color: {r: 57, g: 185, b: 122}},
+  weaver: {color: {r: 151, g: 40, b: 97}},
+  windrush: {color: {r: 239, g: 77, b: 94}},
 };
