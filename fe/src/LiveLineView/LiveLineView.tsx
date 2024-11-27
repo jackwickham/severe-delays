@@ -25,7 +25,7 @@ export const LiveLineView: Component = () => {
   const routeParams = useParams();
   const line = routeParams.line;
   const lineConfig = lineConfigs[line];
-  const direction = lineConfig.direction || "outbound";
+  const direction = lineConfig?.direction || "outbound";
   const [routeApiResponse] = createResource(async (): Promise<TflRouteApiResponse | null> => {
     const resp = await fetch(`https://api.tfl.gov.uk/Line/${line}/Route/Sequence/${direction}`);
     if (resp.status >= 400) {
