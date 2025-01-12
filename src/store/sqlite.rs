@@ -1,11 +1,11 @@
-use std::{collections::HashMap, os::linux::raw::stat};
+use std::collections::HashMap;
 
 use itertools::Itertools;
 use serde_json::Value;
 use sqlx::{self, pool::PoolConnection, Acquire, Sqlite};
 use time::OffsetDateTime;
 
-use crate::types::StatusHistoryEntry;
+use crate::types::{LineStatusHistoryEntry, StationStatusHistoryEntry};
 
 #[derive(Debug, sqlx::FromRow)]
 struct SqliteLineHistoryEntry {
@@ -92,7 +92,7 @@ impl SqliteConnection {
         &mut self,
         start_time: OffsetDateTime,
         end_time: OffsetDateTime,
-    ) -> Result<HashMap<String, Vec<StatusHistoryEntry>>, GetStatusError> {
+    ) -> Result<HashMap<String, Vec<LineStatusHistoryEntry>>, GetStatusError> {
         sqlx::query_as::<_, SqliteLineHistoryEntry>(
             "SELECT * FROM line_history WHERE start_time <= ? AND (end_time IS NULL OR end_time >= ?)",
         )
@@ -103,7 +103,7 @@ impl SqliteConnection {
         .into_iter()
         .map(|row| {
             Ok((
-                StatusHistoryEntry {
+                LineStatusHistoryEntry {
                     start_time: OffsetDateTime::from_unix_timestamp(row.start_time).map_err(
                         |_| {
                             GetStatusError::InvalidData(format!(
@@ -129,7 +129,7 @@ impl SqliteConnection {
             ))
         })
         .fold_ok(
-            HashMap::<String, Vec<StatusHistoryEntry>>::new(),
+            HashMap::<String, Vec<LineStatusHistoryEntry>>::new(),
             |mut acc, (entry, line)| {
                 acc.entry(line).or_insert_with(Vec::new).push(entry);
                 acc
@@ -191,7 +191,7 @@ impl SqliteConnection {
         &mut self,
         start_time: OffsetDateTime,
         end_time: OffsetDateTime,
-    ) -> Result<HashMap<String, Vec<StatusHistoryEntry>>, GetStatusError> {
+    ) -> Result<HashMap<String, Vec<StationStatusHistoryEntry>>, GetStatusError> {
         sqlx::query_as::<_, SqliteStationHistoryEntry>(
             "SELECT * FROM station_history WHERE start_time <= ? AND (end_time IS NULL OR end_time >= ?)",
         )
@@ -202,7 +202,7 @@ impl SqliteConnection {
         .into_iter()
         .map(|row| {
             Ok((
-                StatusHistoryEntry {
+                StationStatusHistoryEntry {
                     start_time: OffsetDateTime::from_unix_timestamp(row.start_time).map_err(
                         |_| {
                             GetStatusError::InvalidData(format!(
@@ -228,7 +228,7 @@ impl SqliteConnection {
             ))
         })
         .fold_ok(
-            HashMap::<String, Vec<StatusHistoryEntry>>::new(),
+            HashMap::<String, Vec<StationStatusHistoryEntry>>::new(),
             |mut acc, (entry, line)| {
                 acc.entry(line).or_insert_with(Vec::new).push(entry);
                 acc
@@ -238,11 +238,11 @@ impl SqliteConnection {
 
     pub async fn set_station_status<U>(
         &mut self,
-        status_by_station: HashMap<String, Value>,
+        status_by_station: HashMap<String, Vec<Value>>,
         should_update: U,
     ) -> Result<(), SetStatusError>
     where
-        U: Fn(&Value, &Value) -> bool + Send + Sync,
+        U: Fn(&Vec<Value>, &Vec<Value>) -> bool + Send + Sync,
     {
         let mut txn = self.connection.begin().await?;
         let now = OffsetDateTime::now_utc();
@@ -271,7 +271,7 @@ impl SqliteConnection {
         }
         for (station, status) in status_by_station {
             if let Some(existing) = existing.get(&station) {
-                if !should_update(&serde_json::from_slice::<Value>(&existing)?, &status) {
+                if !should_update(&serde_json::from_slice::<Vec<Value>>(&existing)?, &status) {
                     continue;
                 }
                 log::info!(
