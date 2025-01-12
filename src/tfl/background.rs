@@ -43,7 +43,7 @@ impl Tfl {
     async fn update_status(&self, store: &mut Store) -> Result<(), PollError> {
         let status = self.api.load_status().await?;
         let mut connection = store.get_connection().await?;
-        connection.set_status(status, should_update).await?;
+        connection.set_line_status(status, should_update).await?;
         Ok(())
     }
 }

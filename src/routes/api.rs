@@ -89,7 +89,7 @@ async fn history(
     to: SerializableDateTime,
 ) -> Result<Json<HashMap<String, ApiLineHistory>>, rocket::http::Status> {
     let status_history = store
-        .get_status_history(from.into(), to.into())
+        .get_line_status_history(from.into(), to.into())
         .await
         .map_err(|e| {
             error!("Error getting status history: {:?}", e);

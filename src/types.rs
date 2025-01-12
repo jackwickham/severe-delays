@@ -27,7 +27,7 @@ pub enum Status {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct LineHistoryEntry {
+pub struct StatusHistoryEntry {
     pub start_time: OffsetDateTime,
     pub end_time: Option<OffsetDateTime>,
     pub data: Value,
