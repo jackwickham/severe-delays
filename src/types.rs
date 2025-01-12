@@ -4,7 +4,7 @@ use time::OffsetDateTime;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LineStatus {
-    pub status: Status,
+    pub status: LineState,
     pub reason: Option<String>,
 }
 
@@ -13,7 +13,7 @@ pub struct LineMetadata {
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Status {
+pub enum LineState {
     Suspended,
     PartSuspended,
     PlannedClosure,
@@ -23,6 +23,21 @@ pub enum Status {
     ReducedService,
     MinorDelays,
     GoodService,
+    Other,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct StationStatus {
+    pub status: StationState,
+    pub description: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum StationState {
+    Closure,
+    PartClosure,
+    InterchangeMessage,
+    Information,
     Other,
 }
 

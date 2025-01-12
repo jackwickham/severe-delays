@@ -1,5 +1,5 @@
 [default]
-cors_origins = ["http://localhost:3000"]
+cors_origins = ["http://localhost:3000", "https://www.severedelays.com"]
 
 [release]
 address = "0.0.0.0"
