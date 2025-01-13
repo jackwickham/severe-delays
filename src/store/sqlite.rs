@@ -261,7 +261,7 @@ impl SqliteConnection {
                     station
                 );
                 sqlx::query(
-                    "UPDATE station_history SET end_time = ? WHERE line = ? AND end_time IS NULL",
+                    "UPDATE station_history SET end_time = ? WHERE station_id = ? AND end_time IS NULL",
                 )
                 .bind(OffsetDateTime::now_utc().unix_timestamp())
                 .bind(&station)
@@ -279,7 +279,7 @@ impl SqliteConnection {
                     station
                 );
                 sqlx::query(
-                    "UPDATE station_history SET end_time = ? WHERE line = ? AND end_time IS NULL",
+                    "UPDATE station_history SET end_time = ? WHERE station_id = ? AND end_time IS NULL",
                 )
                 .bind(OffsetDateTime::now_utc().unix_timestamp())
                 .bind(&station)
