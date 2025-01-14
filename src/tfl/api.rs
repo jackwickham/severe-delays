@@ -1,10 +1,13 @@
 use std::collections::HashMap;
 
+use itertools::Itertools;
 use reqwest::RequestBuilder;
 use serde_json::Value;
 
-const STATUS_API_URI: &'static str =
+const LINE_STATUS_API_URI: &'static str =
     "https://api.tfl.gov.uk/Line/Mode/tube,dlr,overground,elizabeth-line/Status";
+const STATION_STATUS_API_URI: &'static str =
+    "https://api.tfl.gov.uk/StopPoint/Mode/tube,dlr,overground,elizabeth-line/Disruption";
 
 pub struct Api {
     client: reqwest::Client,
@@ -22,9 +25,9 @@ impl Api {
         }
     }
 
-    pub async fn load_status(&self) -> Result<HashMap<String, Value>, ApiError> {
+    pub async fn load_line_status(&self) -> Result<HashMap<String, Value>, ApiError> {
         let resp = self
-            .add_api_key(self.client.get(STATUS_API_URI))
+            .add_api_key(self.client.get(LINE_STATUS_API_URI))
             .send()
             .await?;
         let tfl_status = resp.json::<Vec<Value>>().await?;
@@ -41,6 +44,19 @@ impl Api {
         } else {
             request
         }
+    }
+
+    pub async fn load_station_status(&self) -> Result<HashMap<String, Vec<Value>>, ApiError> {
+        let resp = self
+            .add_api_key(self.client.get(STATION_STATUS_API_URI))
+            .send()
+            .await?;
+        let tfl_status = resp.json::<Vec<Value>>().await?;
+        let status = tfl_status
+            .into_iter()
+            .filter_map(|value| Some((value.get("stationAtcoCode")?.as_str()?.to_string(), value)))
+            .into_group_map();
+        Ok(status)
     }
 }
 
