@@ -7,8 +7,7 @@ use rocket::request::FromRequest;
 
 use self::sqlite::SqliteStore;
 pub use self::sqlite::{
-    ConnectionError, GetStatusError, InitializationError, SetStatusError,
-    SqliteConnection as StoreConnection,
+    ConnectionError, InitializationError, SetStatusError, SqliteConnection as StoreConnection,
 };
 
 pub use self::fairing::StoreFairing;
