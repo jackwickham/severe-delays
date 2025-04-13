@@ -289,11 +289,6 @@ export const StatusHistoryBase = <T,>(props: StatusHistoryBaseProps<T>) => {
           <For each={statusHistoryInRange()}>
             {(entry) => {
               const collapsedStatuses = () => collapseStatuses(entry.statuses);
-              const [showReasonHoverShadow, setShowReasonHoverShadow] = createSignal(true);
-              let reasonElem: HTMLParagraphElement;
-              onMount(() =>
-                setShowReasonHoverShadow(reasonElem!.clientHeight < reasonElem!.scrollHeight)
-              );
               return (
                 <div class="relative mb-3 last:mb-0">
                   <span
@@ -303,23 +298,36 @@ export const StatusHistoryBase = <T,>(props: StatusHistoryBaseProps<T>) => {
                   ></span>
                   <div class="inline-block ms-3">
                     <For each={collapsedStatuses()}>
-                      {(status) => (
-                        <>
-                          <h3 class="font-semibold">{status.state.join(" / ")}</h3>
-                          <div class="text-sm max-h-10">
-                            <p
-                              class="line-clamp-2 hover:line-clamp-none hover:bg-page-background hover:z-10 relative"
-                              classList={{
-                                "hover:shadow-[0_4px_2px_-2px_rgba(0,0,0,0.2)]":
-                                  showReasonHoverShadow(),
-                              }}
-                              ref={reasonElem}
-                            >
-                              {status.reason}
-                            </p>
-                          </div>
-                        </>
-                      )}
+                      {(status) => {
+                        const [showReasonHoverShadow, setShowReasonHoverShadow] =
+                          createSignal(true);
+                        const [reasonElem, setReasonElem] = createSignal<HTMLParagraphElement>();
+                        onMount(() => {
+                          const elem = reasonElem();
+                          if (elem) {
+                            setShowReasonHoverShadow(elem.clientHeight < elem.scrollHeight);
+                          } else {
+                            console.warn("reason element not initialized");
+                          }
+                        });
+                        return (
+                          <>
+                            <h3 class="font-semibold">{status.state.join(" / ")}</h3>
+                            <div class="text-sm max-h-10">
+                              <p
+                                class="line-clamp-2 hover:line-clamp-none hover:bg-page-background hover:z-10 relative"
+                                classList={{
+                                  "hover:shadow-[0_4px_2px_-2px_rgba(0,0,0,0.2)]":
+                                    showReasonHoverShadow(),
+                                }}
+                                ref={setReasonElem}
+                              >
+                                {status.reason}
+                              </p>
+                            </div>
+                          </>
+                        );
+                      }}
                     </For>
                     <p class="text-slate-500 text-xs">
                       {renderTimeRange(entry.startTime, entry.endTime)}
