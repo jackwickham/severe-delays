@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use itertools::Itertools;
 use serde::Deserialize;
 use serde_json::Value;
@@ -111,4 +113,19 @@ fn from_tfl_station_status(tfl_type: &str) -> StationState {
         "Information" => StationState::Information,
         _ => StationState::Other,
     }
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct StopPointModeResponse {
+    #[serde(rename = "stopPoints")]
+    pub stop_points: Vec<StopPointDetails>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct StopPointDetails {
+    pub id: String,
+    #[serde(rename = "commonName")]
+    pub common_name: String,
+    #[serde(rename = "stationNaptan", default)]
+    pub station_naptan: Option<String>,
 }

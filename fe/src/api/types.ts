@@ -1,4 +1,4 @@
-export interface ApiResponse {
+export interface LineApiResponse {
   [lineId: string]: LineHistory;
 }
 
@@ -14,11 +14,11 @@ export interface LineStatus {
 }
 
 export interface LineStatusEntry {
-  status: Status;
+  status: LineStatusEnum;
   reason?: string;
 }
 
-export type Status =
+export type LineStatusEnum =
   | "Suspended"
   | "PartSuspended"
   | "PlannedClosure"
@@ -34,3 +34,36 @@ export type Status =
 export interface LineMetadata {
   mode?: string;
 }
+
+export interface StationApiResponse {
+  [stationId: string]: {
+    history: StationStatusEntry[];
+  };
+}
+
+export interface StationDetailsApiResponse {
+  [stationId: string]: StationDetail;
+}
+
+export interface StationDetail {
+  name: string;
+}
+
+export interface StationStatusEntry {
+  entries: StationStatusDetails[];
+  from: string; // datetime
+  to?: string; // datetime
+}
+
+export interface StationStatusDetails {
+  status: StationStatusType;
+  description: string;
+}
+
+export type StationStatusType =
+  | "Closure"
+  | "PartClosure"
+  | "InterchangeMessage"
+  | "Information"
+  | "Other"
+  | string;

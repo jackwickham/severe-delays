@@ -1,16 +1,19 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use rocket::form::FromFormField;
+use rocket::State;
 use rocket::{serde::json::Json, Route};
 use serde::Serialize;
 use time::{format_description, OffsetDateTime};
 
 use crate::store::StoreConnection;
+use crate::tfl::LoadedStationDetails;
 use crate::types::{LineMetadata, StationState};
 use crate::{tfl, types::LineState};
 
 pub fn get_routes() -> Vec<Route> {
-    routes![line_history, station_history]
+    routes![line_history, station_history, station_details]
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -61,6 +64,11 @@ struct ApiStationStatus {
 struct ApiStationStatusEntry {
     status: StationState,
     description: String,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+struct StationDetails {
+    name: String,
 }
 
 #[derive(Debug, Clone)]
@@ -206,5 +214,32 @@ async fn station_history(
             (station, ApiStationHistory { history })
         })
         .collect::<HashMap<_, _>>();
+    Ok(Json(response))
+}
+
+#[get("/v1/station-details")]
+async fn station_details(
+    loaded_details: &State<Arc<LoadedStationDetails>>,
+) -> Result<Json<HashMap<String, StationDetails>>, rocket::http::Status> {
+    // Try to get the details, which will load them if not loaded yet
+    let details = loaded_details.get_details().await
+        .map_err(|e| {
+            error!("Error getting station details: {}", e);
+            rocket::http::Status::ServiceUnavailable
+        })?;
+    
+    // Convert to response format
+    let response: HashMap<String, StationDetails> = details
+        .iter()
+        .map(|details| {
+            (
+                details.id.clone(),
+                StationDetails {
+                    name: details.common_name.clone(),
+                },
+            )
+        })
+        .collect();
+    
     Ok(Json(response))
 }
