@@ -44,6 +44,7 @@ export const Station: Component<StationProps> = (props: StationProps) => {
       getStatusColour={getStatusColour}
       detailTitle="Station details"
       entityType="station"
+      mode="station"
       noDataState={{state: StationState.NO_DISRUPTION, reason: null}}
       otherState={StationState.OTHER}
     />

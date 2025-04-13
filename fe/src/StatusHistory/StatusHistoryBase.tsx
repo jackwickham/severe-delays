@@ -171,6 +171,17 @@ export const StatusHistoryBase = <T,>(props: StatusHistoryBaseProps<T>) => {
                   </Show>
                 </div>
               </Show>
+              <Show when={props.mode === "station" && props.favourite}>
+                <div class="w-4 h-4 mr-2 inline-flex items-center justify-center align-baseline relative">
+                  <span
+                    class="flex justify-around"
+                    innerHTML={feather.icons["home"].toSvg({
+                      width: 16,
+                      height: 16,
+                    })}
+                  />
+                </div>
+              </Show>
               {props.name}
             </h3>
             <div class="flex flex-row flex-wrap justify-after text-sm text-slate-500 space-x-3 mb-2">
