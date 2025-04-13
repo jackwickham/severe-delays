@@ -4,7 +4,7 @@ import {render} from "solid-js/web";
 import "./index.css";
 import App from "./App";
 import {Route, Router} from "@solidjs/router";
-import {LineHistory} from "./LineHistory";
+import {StatusHistory} from "./StatusHistory";
 import {LiveLineView} from "./LiveLineView";
 import {NotFound} from "./NotFound";
 
@@ -19,7 +19,7 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
 render(
   () => (
     <Router root={App}>
-      <Route path="/" component={LineHistory} />
+      <Route path="/" component={StatusHistory} />
       <Route path="/live/:line" component={LiveLineView} />
       <Route path="*" component={NotFound} />
     </Router>

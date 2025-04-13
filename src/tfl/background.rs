@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::sync::Arc;
 
 use log::{debug, warn};
 use rocket::tokio::{self, try_join};
@@ -8,7 +9,7 @@ use super::api::{Api, ApiError};
 use crate::store::{ConnectionError, SetStatusError, Store};
 
 pub struct Tfl {
-    api: Api,
+    pub api: Api,
 }
 
 const IGNORED_FIELDS: &[&str] = &["validityPeriods", "created"];
@@ -20,7 +21,7 @@ impl Tfl {
         }
     }
 
-    pub async fn start_polling(&self, mut store: Store) {
+    pub async fn start_polling(self: Arc<Self>, mut store: Store) {
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(60));
         loop {
             interval.tick().await;

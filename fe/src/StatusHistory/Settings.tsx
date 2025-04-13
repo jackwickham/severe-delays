@@ -10,6 +10,8 @@ export interface Settings {
   includeClosedInStats: boolean;
   includePlannedClosuresInStats: boolean;
   favouriteLines: string[];
+  favouriteStations: string[];
+  includeStationInformationInStats: boolean;
 }
 
 type SerializedSettings = Partial<Settings>;
@@ -64,9 +66,11 @@ export const Settings: Component<SettingsProps> = (props) => {
 const SettingsPopoverContent: Component<SettingsProps> = (props) => {
   let includeClosedInStatsCheckbox: HTMLInputElement | undefined;
   let includePlannedClosuresInStatsCheckbox: HTMLInputElement | undefined;
+  let includeStationInformationInStatsCheckbox: HTMLInputElement | undefined;
 
   return (
-    <>
+    <div class="space-y-3">
+      <h3 class="font-semibold text-lg">Line Settings</h3>
       <div>
         <label>
           <input
@@ -97,7 +101,25 @@ const SettingsPopoverContent: Component<SettingsProps> = (props) => {
           Include planned closures in stats
         </label>
       </div>
-    </>
+
+      <h3 class="font-semibold text-lg pt-2">Station Settings</h3>
+      <div>
+        <label>
+          <input
+            type="checkbox"
+            class="mr-2"
+            ref={includeStationInformationInStatsCheckbox}
+            checked={props.store.includeStationInformationInStats}
+            onInput={() =>
+              props.setStore({
+                includeStationInformationInStats: includeStationInformationInStatsCheckbox!.checked,
+              })
+            }
+          />
+          Show informational messages
+        </label>
+      </div>
+    </div>
   );
 };
 
@@ -114,6 +136,8 @@ export const createSettingsStore: () => [Settings, SetStoreFunction<Settings>] =
       includeClosedInStats: true,
       includePlannedClosuresInStats: true,
       favouriteLines: [],
+      favouriteStations: [],
+      includeStationInformationInStats: true,
     },
     existingSettings
   );

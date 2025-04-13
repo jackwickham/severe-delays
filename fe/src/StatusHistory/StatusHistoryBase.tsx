@@ -1,19 +1,37 @@
-import {For, type Component, createMemo, Show, createSignal, onMount} from "solid-js";
-import {type LineStatus, State} from "./types";
+import {For, createMemo, createSignal, onMount, Show} from "solid-js";
 import {Popover} from "../Popover";
 import {Button} from "../components/Button";
-import feather from "feather-icons";
+import feather, {type FeatherIconNames} from "feather-icons";
 import {A} from "@solidjs/router";
 
-export interface HistoryEntry {
+export interface HistoryEntry<T> {
   startTime: Date;
-  statuses: LineStatus[];
-  overallState: State;
+  statuses: Status<T>[];
+  overallState: T;
 }
 
-export interface LineProps {
+export interface Status<T> {
+  state: T;
+  reason: string | null;
+}
+
+export interface RenderedHistoryEntry<T> {
+  startTime: Date | null;
+  endTime: Date | null;
+  displayStartTime: number;
+  displayEndTime: number;
+  statuses: Status<T>[];
+  overallState: T;
+}
+
+interface RenderedStatus<T> {
+  state: T[];
+  reason: string | null;
+}
+
+export interface StatusHistoryBaseProps<T> {
   name: string;
-  statusHistory: HistoryEntry[];
+  statusHistory: HistoryEntry<T>[];
   displayRange: {
     start: Date;
     end: Date;
@@ -26,42 +44,36 @@ export interface LineProps {
   mode?: string;
   favourite: boolean;
   toggleFavourite: () => void;
+  getStatusColour: (state: T) => string;
+  detailUrl?: string;
+  detailIcon?: FeatherIconNames;
+  detailTitle?: string;
+  entityType: "line" | "station";
+  noDataState: Status<T>; // Default state for no data
+  otherState: T; // Used for filtering non-significant states in performance stats
 }
 
-interface RenderedHistoryEntry {
-  startTime: Date | null;
-  endTime: Date | null;
-  displayStartTime: number;
-  displayEndTime: number;
-  statuses: LineStatus[];
-  overallState: State;
-}
+export const StatusHistoryBase = <T,>(props: StatusHistoryBaseProps<T>) => {
+  const statusHistoryInRange = createMemo<RenderedHistoryEntry<T>[]>(() => {
+    // if (props.statusHistory.length === 0) {
+    //   return [];
+    // }
 
-interface RenderedLineStatus {
-  state: State[];
-  reason: string | null;
-}
-
-export const Line: Component<LineProps> = (props: LineProps) => {
-  const statusHistoryInRange = createMemo<RenderedHistoryEntry[]>(() => {
-    if (props.statusHistory.length === 0) {
-      return [];
-    }
-
-    const result: RenderedHistoryEntry[] = [];
-    if (props.statusHistory[0].startTime.getTime() > props.displayRange.start.getTime()) {
+    const result: RenderedHistoryEntry<T>[] = [];
+    if (
+      props.statusHistory.length == 0 ||
+      props.statusHistory[0].startTime.getTime() > props.displayRange.start.getTime()
+    ) {
       result.push({
         startTime: null,
-        endTime: props.statusHistory[0].startTime,
+        endTime: props.statusHistory.length === 0 ? null : props.statusHistory[0].startTime,
         displayStartTime: props.displayRange.start.getTime(),
-        displayEndTime: props.statusHistory[0].startTime.getTime(),
-        statuses: [
-          {
-            state: State.OTHER,
-            reason: "No data",
-          },
-        ],
-        overallState: State.OTHER,
+        displayEndTime:
+          props.statusHistory.length === 0
+            ? props.displayRange.end.getTime()
+            : props.statusHistory[0].startTime.getTime(),
+        statuses: [props.noDataState],
+        overallState: props.noDataState.state,
       });
     }
     for (let i = 0; i < props.statusHistory.length; i++) {
@@ -85,32 +97,32 @@ export const Line: Component<LineProps> = (props: LineProps) => {
     }
     return result;
   });
+
   // Set flex-basis based on 10k px width, then rely on flex-shrink to fit the container
   const basisMultiplier = () =>
     10000 / (props.displayRange.end.getTime() - props.displayRange.start.getTime());
 
   const performanceStats = createMemo(() => {
-    const durations: Partial<{[key in State]: number}> = {};
+    const durations: Map<T, number> = new Map();
     let total = 0;
     for (const statusHistory of statusHistoryInRange()) {
-      if (statusHistory.overallState !== State.OTHER) {
-        durations[statusHistory.overallState] =
-          (durations[statusHistory.overallState] || 0) +
-          statusHistory.displayEndTime -
-          statusHistory.displayStartTime;
-        total += statusHistory.displayEndTime - statusHistory.displayStartTime;
+      if (statusHistory.overallState !== props.otherState) {
+        const currentDuration = durations.get(statusHistory.overallState) || 0;
+        const entryDuration = statusHistory.displayEndTime - statusHistory.displayStartTime;
+        durations.set(statusHistory.overallState, currentDuration + entryDuration);
+        total += entryDuration;
       }
     }
+
     // Convert to percentages
-    const results: {state: State; performancePercentage: number}[] = [];
-    for (const state of Object.values(State)) {
-      if (state in durations) {
-        results.push({
-          state: state as State,
-          performancePercentage: (durations[state as State]! / total) * 100,
-        });
-      }
-    }
+    const results: {state: T; performancePercentage: number}[] = [];
+    durations.forEach((duration, state) => {
+      results.push({
+        state,
+        performancePercentage: (duration / total) * 100,
+      });
+    });
+
     return results;
   });
 
@@ -167,9 +179,10 @@ export const Line: Component<LineProps> = (props: LineProps) => {
                 {(perf) => (
                   <p>
                     <span
-                      class={`w-2 h-2 rounded-full inline-block ${getStatusColour(perf.state)}`}
+                      class={`w-2 h-2 rounded-full inline-block ${props.getStatusColour(perf.state)}`}
                     ></span>{" "}
-                    {perf.state}: {perf.performancePercentage.toFixed(1)}%
+                    {String(perf.state).replace(/_/g, " ")}: {perf.performancePercentage.toFixed(1)}
+                    %
                   </p>
                 )}
               </For>
@@ -190,12 +203,12 @@ export const Line: Component<LineProps> = (props: LineProps) => {
                 })}
               />
             </Button>
-            <Show when={props.mode === "tube"}>
-              <A href={`/live/${props.name}`} title="Current train locations">
+            <Show when={props.detailUrl && props.detailIcon && props.detailTitle}>
+              <A href={props.detailUrl!} title={props.detailTitle}>
                 <Button rounded={false} padded={false} class="rounded-full w-8 h-8 p-0">
                   <span
                     class="flex justify-around"
-                    innerHTML={feather.icons["radio"].toSvg({width: 16})}
+                    innerHTML={feather.icons[props.detailIcon!].toSvg({width: 16})}
                   />
                 </Button>
               </A>
@@ -219,7 +232,7 @@ export const Line: Component<LineProps> = (props: LineProps) => {
           <For each={statusHistoryInRange()}>
             {(entry, i) => {
               const basis = (entry.displayEndTime - entry.displayStartTime) * basisMultiplier();
-              const colour = getStatusColour(entry.overallState);
+              const colour = props.getStatusColour(entry.overallState);
               const [onPopoverShowHandler, setOnPopoverShowHandler] = createSignal<() => void>();
               const collapsedStatuses = () => collapseStatuses(entry.statuses);
               return (
@@ -273,7 +286,7 @@ export const Line: Component<LineProps> = (props: LineProps) => {
               return (
                 <div class="relative mb-3 last:mb-0">
                   <span
-                    class={`absolute w-3 h-3 rounded-full inline-block top-1.5 -left-px -translate-x-1/2 ${getStatusColour(
+                    class={`absolute w-3 h-3 rounded-full inline-block top-1.5 -left-px -translate-x-1/2 ${props.getStatusColour(
                       entry.overallState
                     )}`}
                   ></span>
@@ -311,31 +324,6 @@ export const Line: Component<LineProps> = (props: LineProps) => {
   );
 };
 
-const getStatusColour = (state: State): string => {
-  switch (state) {
-    case State.GOOD_SERVICE:
-      return "bg-green-500";
-    case State.MINOR_DELAYS:
-      return "bg-yellow-400";
-    case State.SEVERE_DELAYS:
-      return "bg-orange-600";
-    case State.PART_SUSPENDED:
-      return "bg-red-700";
-    case State.SUSPENDED:
-      return "bg-red-800";
-    case State.PART_CLOSURE:
-      return "bg-red-300";
-    case State.PLANNED_CLOSURE:
-      return "bg-red-400";
-    case State.REDUCED_SERVICE:
-      return "bg-blue-400";
-    case State.OTHER:
-    case State.SERVICE_CLOSED:
-    default:
-      return "bg-gray-500";
-  }
-};
-
 const renderTimeRange = (startTime: Date | null, endTime: Date | null) => {
   if (startTime === null && endTime === null) {
     return null;
@@ -370,21 +358,22 @@ const renderShortDuration = (startTime: Date, endTime: Date) => {
   }
 };
 
-const collapseStatuses = (statuses: LineStatus[]) => {
-  const result: RenderedLineStatus[] = [];
-  const resultsByReason: Map<string | null, RenderedLineStatus> = new Map();
+const collapseStatuses = <T,>(statuses: Status<T>[]) => {
+  const result: RenderedStatus<T>[] = [];
+  const resultsByReason: Map<string | null, RenderedStatus<T>> = new Map();
   for (const status of statuses) {
-    if (resultsByReason.has(status.reason)) {
-      const existingEntry = resultsByReason.get(status.reason)!;
+    const reasonKey = status.reason;
+    if (resultsByReason.has(reasonKey)) {
+      const existingEntry = resultsByReason.get(reasonKey)!;
       if (!existingEntry.state.includes(status.state)) {
         existingEntry.state.push(status.state);
       }
     } else {
-      const renderedStatus: RenderedLineStatus = {
+      const renderedStatus: RenderedStatus<T> = {
         state: [status.state],
         reason: status.reason,
       };
-      resultsByReason.set(status.reason, renderedStatus);
+      resultsByReason.set(reasonKey, renderedStatus);
       result.push(renderedStatus);
     }
   }
