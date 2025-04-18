@@ -215,7 +215,14 @@ export const StatusHistory: Component = () => {
 
     if (!query) {
       // When no search, only show stations with disruptions (non-empty status history)
-      return stations().filter((station) => !station.favourite && station.statusHistory.length > 0);
+      return stations().filter(
+        (station) =>
+          !station.favourite &&
+          station.statusHistory.some(
+            (e) =>
+              settingsStore.includeStationInformationInStats || e.overallState !== "No disruption"
+          )
+      );
     }
 
     // When searching, show all stations matching the query
@@ -229,9 +236,7 @@ export const StatusHistory: Component = () => {
   const hasError = () => lineResponse.error || stationResponse.error;
 
   const favouriteLinesToShow = () =>
-    viewMode() === "both" || viewMode() === "lines"
-      ? lines().filter((line) => line.favourite)
-      : [];
+    viewMode() === "both" || viewMode() === "lines" ? lines().filter((line) => line.favourite) : [];
   const favouriteStationsToShow = () =>
     viewMode() === "both" || viewMode() === "stations"
       ? stations().filter((station) => station.favourite)
@@ -239,7 +244,7 @@ export const StatusHistory: Component = () => {
 
   return (
     <>
-      <div class="flex flex-row justify-between items-center space-x-4 text-sm mb-4">
+      <div class="flex flex-wrap justify-between items-center gap-y-4 text-sm mb-4 gap-x-4">
         <div>
           <SplitButton
             buttons={[
@@ -403,9 +408,8 @@ const mapLineState = (state: string | undefined): LineState => {
 const mapStationState = (state: string | null | undefined): StationState => {
   switch (state) {
     case "Closure":
-      return StationState.CLOSURE;
     case "PartClosure":
-      return StationState.PART_CLOSURE;
+      return StationState.CLOSURE;
     case "InterchangeMessage":
       return StationState.INTERCHANGE_MESSAGE;
     case "Information":

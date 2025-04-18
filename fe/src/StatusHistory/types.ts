@@ -14,7 +14,6 @@ export enum LineState {
 export enum StationState {
   NO_DISRUPTION = "No disruption",
   CLOSURE = "Closure",
-  PART_CLOSURE = "Part closure",
   INTERCHANGE_MESSAGE = "Interchange message",
   INFORMATION = "Information",
   OTHER = "Other",

@@ -137,7 +137,7 @@ export const createSettingsStore: () => [Settings, SetStoreFunction<Settings>] =
       includePlannedClosuresInStats: true,
       favouriteLines: [],
       favouriteStations: [],
-      includeStationInformationInStats: true,
+      includeStationInformationInStats: false,
     },
     existingSettings
   );

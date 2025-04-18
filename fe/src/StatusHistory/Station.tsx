@@ -22,8 +22,6 @@ export const Station: Component<StationProps> = (props: StationProps) => {
         return "bg-green-500";
       case StationState.CLOSURE:
         return "bg-red-800";
-      case StationState.PART_CLOSURE:
-        return "bg-red-600";
       case StationState.INTERCHANGE_MESSAGE:
         return "bg-blue-400";
       case StationState.INFORMATION:
