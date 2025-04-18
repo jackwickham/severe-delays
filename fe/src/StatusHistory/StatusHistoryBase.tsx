@@ -98,7 +98,7 @@ export const StatusHistoryBase = <T,>(props: StatusHistoryBaseProps<T>) => {
     return result;
   });
 
-  // Set flex-basis based on 10k px width, then rely on flex-shrink to fit the container
+  // Set flex-basis based on 10k px width, then rely on shrink to fit the container
   const basisMultiplier = () =>
     10000 / (props.displayRange.end.getTime() - props.displayRange.start.getTime());
 
@@ -239,7 +239,7 @@ export const StatusHistoryBase = <T,>(props: StatusHistoryBaseProps<T>) => {
             </Button>
           </div>
         </div>
-        <div class="flex flex-row items-center bg-slate-300 h-3 rounded">
+        <div class="flex flex-row items-center bg-slate-300 h-3 rounded-sm">
           <For each={statusHistoryInRange()}>
             {(entry, i) => {
               const basis = (entry.displayEndTime - entry.displayStartTime) * basisMultiplier();
@@ -248,7 +248,7 @@ export const StatusHistoryBase = <T,>(props: StatusHistoryBaseProps<T>) => {
               const collapsedStatuses = () => collapseStatuses(entry.statuses);
               return (
                 <div
-                  class="flex-grow flex-shrink h-full hover:py-1 transition-all ease-linear box-content group/popover"
+                  class="grow shrink h-full hover:py-1 transition-all ease-linear box-content group/popover"
                   classList={{
                     [colour]: true,
                     "rounded-l": i() === 0,

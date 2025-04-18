@@ -347,7 +347,7 @@ export const StatusHistory: Component = () => {
                   placeholder="Search stations..."
                   value={stationSearchQuery()}
                   onInput={(e) => setStationSearchQuery(e.target.value)}
-                  class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500"
+                  class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-slate-500"
                 />
                 <Show when={stationSearchQuery().length > 0}>
                   <button
