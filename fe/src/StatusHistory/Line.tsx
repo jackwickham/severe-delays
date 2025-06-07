@@ -20,6 +20,28 @@ export interface LineProps {
 }
 
 export const Line: Component<LineProps> = (props: LineProps) => {
+  const convertLineIdToFriendlyName = (lineId: string): string => {
+    // Special cases for lines that don't follow the general pattern
+    const specialCases: Record<string, string> = {
+      dlr: "DLR",
+      "hammersmith-city": "Hammersmith & City line",
+      "waterloo-city": "Waterloo & City line",
+      elizabeth: "Elizabeth Line",
+    };
+
+    if (specialCases[lineId]) {
+      return specialCases[lineId];
+    }
+
+    // General pattern: capitalize first letter and replace dashes with spaces
+    return (
+      lineId
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ") + " line"
+    );
+  };
+
   const getStatusColour = (state: LineState): string => {
     switch (state) {
       case LineState.GOOD_SERVICE:
@@ -47,7 +69,7 @@ export const Line: Component<LineProps> = (props: LineProps) => {
 
   return (
     <StatusHistoryBase<LineState>
-      name={props.name}
+      name={convertLineIdToFriendlyName(props.name)}
       statusHistory={props.statusHistory}
       displayRange={props.displayRange}
       color={props.color}
