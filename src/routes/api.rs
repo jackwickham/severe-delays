@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use log::warn;
 use rocket::form::FromFormField;
 use rocket::State;
 use rocket::{serde::json::Json, Route};
 use serde::Serialize;
+use time::ext::NumericalDuration;
 use time::{format_description, OffsetDateTime};
 
 use crate::store::StoreConnection;
@@ -114,6 +116,7 @@ async fn line_history(
     from: SerializableDateTime,
     to: SerializableDateTime,
 ) -> Result<Json<HashMap<String, ApiLineHistory>>, rocket::http::Status> {
+    check_time_range(&from, &to)?;
     let status_history = store
         .get_line_status_history(from.into(), to.into())
         .await
@@ -175,6 +178,7 @@ async fn station_history(
     from: SerializableDateTime,
     to: SerializableDateTime,
 ) -> Result<Json<HashMap<String, ApiStationHistory>>, rocket::http::Status> {
+    check_time_range(&from, &to)?;
     let status_history = store
         .get_station_status_history(from.into(), to.into())
         .await
@@ -222,12 +226,11 @@ async fn station_details(
     loaded_details: &State<Arc<LoadedStationDetails>>,
 ) -> Result<Json<HashMap<String, StationDetails>>, rocket::http::Status> {
     // Try to get the details, which will load them if not loaded yet
-    let details = loaded_details.get_details().await
-        .map_err(|e| {
-            error!("Error getting station details: {}", e);
-            rocket::http::Status::ServiceUnavailable
-        })?;
-    
+    let details = loaded_details.get_details().await.map_err(|e| {
+        error!("Error getting station details: {}", e);
+        rocket::http::Status::ServiceUnavailable
+    })?;
+
     // Convert to response format
     let response: HashMap<String, StationDetails> = details
         .iter()
@@ -240,6 +243,17 @@ async fn station_details(
             )
         })
         .collect();
-    
+
     Ok(Json(response))
+}
+
+fn check_time_range(
+    from: &SerializableDateTime,
+    to: &SerializableDateTime,
+) -> Result<(), rocket::http::Status> {
+    if to.0 - from.0 > 32.days() {
+        warn!("Rqeuest range too large: {} to {}", from.0, to.0);
+        return Err(rocket::http::Status::BadRequest);
+    }
+    Ok(())
 }
