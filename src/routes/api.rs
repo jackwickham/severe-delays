@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use log::warn;
 use rocket::form::FromFormField;
 use rocket::State;
 use rocket::{serde::json::Json, Route};
@@ -251,6 +252,7 @@ fn check_time_range(
     to: &SerializableDateTime,
 ) -> Result<(), rocket::http::Status> {
     if to.0 - from.0 > 32.days() {
+        warn!("Rqeuest range too large: {} to {}", from.0, to.0);
         return Err(rocket::http::Status::BadRequest);
     }
     Ok(())
