@@ -38,7 +38,7 @@ pub fn try_parse_line_status(
             reason: s.reason,
         })
         .collect::<Vec<_>>();
-    statuses.sort_by_key(|s| s.status);
+    statuses.sort();
     let metadata = LineMetadata {
         mode: status.mode_name,
     };
@@ -101,7 +101,7 @@ pub fn try_parse_station_status(line_id: &str, values: &Vec<Value>) -> Option<Ve
         })
         .try_collect()
         .ok()?;
-    statuses.sort_by_key(|s| s.status);
+    statuses.sort();
     Some(statuses)
 }
 
