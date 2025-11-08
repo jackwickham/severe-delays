@@ -77,7 +77,11 @@ export const Line: Component<LineProps> = (props: LineProps) => {
       favourite={props.favourite}
       toggleFavourite={props.toggleFavourite}
       getStatusColour={getStatusColour}
-      detailUrl={props.mode === "tube" ? `/live/${props.name}` : undefined}
+      detailUrl={
+        props.mode === "tube" || props.mode === "elizabeth-line" || props.mode === "overground"
+          ? `/live/${props.name}`
+          : undefined
+      }
       detailIcon="radio"
       detailTitle="Current train locations"
       entityType="line"

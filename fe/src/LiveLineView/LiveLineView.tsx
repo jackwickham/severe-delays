@@ -274,7 +274,12 @@ export const LiveLineView: Component = () => {
       let vehicle = resp.vehicleId != "000" ? resp.vehicleId : resp.currentLocation;
       let existing = res[vehicle];
       if (!existing || !existing.direction || !existing.location) {
-        const parsedLocation = parseLocation(resp.currentLocation, stations());
+        // For Elizabeth line and Overground, currentLocation is empty, so use naptanId as fallback
+        const parsedLocation =
+          parseLocation(resp.currentLocation, stations()) ||
+          (resp.naptanId && resp.naptanId in stations()
+            ? {type: "at" as const, station: resp.naptanId}
+            : null);
         res[vehicle] = {
           vehicleId: resp.vehicleId,
           currentLocation: resp.currentLocation,
