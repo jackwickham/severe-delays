@@ -275,11 +275,33 @@ export const LiveLineView: Component = () => {
       let existing = res[vehicle];
       if (!existing || !existing.direction || !existing.location) {
         // For Elizabeth line and Overground, currentLocation is empty, so use naptanId as fallback
-        const parsedLocation =
-          parseLocation(resp.currentLocation, stations()) ||
-          (resp.naptanId && resp.naptanId in stations()
-            ? {type: "at" as const, station: resp.naptanId}
-            : null);
+        let parsedLocation = parseLocation(resp.currentLocation, stations());
+
+        if (!parsedLocation && resp.naptanId && resp.naptanId in stations()) {
+          const targetStation = stations()[resp.naptanId];
+          // Use timeToStation to infer position: <30s = at/approaching, otherwise between stations
+          if (resp.timeToStation < 30) {
+            parsedLocation = {type: "at" as const, station: resp.naptanId};
+          } else if (resp.timeToStation < 90) {
+            parsedLocation = {type: "approaching" as const, station: resp.naptanId};
+          } else {
+            // Try to find the previous station based on direction
+            const trainDirection = resp.direction || direction;
+            const predecessors =
+              trainDirection === direction ? targetStation.predecessors : targetStation.successors;
+
+            if (predecessors.length > 0) {
+              parsedLocation = {
+                type: "between" as const,
+                startStation: predecessors[0],
+                endStation: resp.naptanId,
+              };
+            } else {
+              parsedLocation = {type: "approaching" as const, station: resp.naptanId};
+            }
+          }
+        }
+
         res[vehicle] = {
           vehicleId: resp.vehicleId,
           currentLocation: resp.currentLocation,
