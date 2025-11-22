@@ -22,7 +22,7 @@ const REFRESH_INTERVAL = 30000;
 
 export const LiveLineView: Component = () => {
   let refreshIndicator: SVGAnimateElement | undefined;
-  const routeParams = useParams();
+  const routeParams = useParams<{line: string}>();
   const line = routeParams.line;
   const lineConfig = lineConfigs[line];
   const direction = lineConfig?.direction || "outbound";
