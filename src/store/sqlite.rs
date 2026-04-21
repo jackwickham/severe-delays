@@ -69,6 +69,30 @@ impl SqliteStore {
         .execute(&pool)
         .await?;
 
+        sqlx::query(
+            "CREATE INDEX IF NOT EXISTS idx_line_history_times ON line_history (start_time, end_time)",
+        )
+        .execute(&pool)
+        .await?;
+
+        sqlx::query(
+            "CREATE INDEX IF NOT EXISTS idx_station_history_times ON station_history (start_time, end_time)",
+        )
+        .execute(&pool)
+        .await?;
+
+        sqlx::query(
+            "CREATE INDEX IF NOT EXISTS idx_line_history_open ON line_history (line) WHERE end_time IS NULL",
+        )
+        .execute(&pool)
+        .await?;
+
+        sqlx::query(
+            "CREATE INDEX IF NOT EXISTS idx_station_history_open ON station_history (station_id) WHERE end_time IS NULL",
+        )
+        .execute(&pool)
+        .await?;
+
         Ok(SqliteStore { pool })
     }
 
