@@ -14,4 +14,4 @@ log = "0.4"
 time = { version = "0.3.47", features = ["serde", "parsing"] }
 async-trait = "0.1.89"
 sqlx = { version = "0.9", features = [ "runtime-tokio", "sqlite" ] }
-itertools = "0.14.0"
+itertools = "0.15.0"
