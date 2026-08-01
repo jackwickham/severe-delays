@@ -15,13 +15,17 @@ export const TrainIndicator: Component<TrainProps> = (props: TrainProps) => {
     `M ${props.x - 4.2} ${props.y + 4.2 * directionMultiplier} ` +
     `a 6 6, 0, 1, ${up ? 0 : 1}, 8.4 0 ` +
     `l -4.2 ${4.2 * directionMultiplier} Z`;
+  let label = `Train to ${props.train.destination}`;
+  if (props.train.currentLocation) {
+    label +=
+      ", currently " +
+      props.train.currentLocation[0].toLowerCase() +
+      props.train.currentLocation.substring(1);
+  }
+  label += ` [${props.train.vehicleId}]`;
   return (
     <path d={path} class="fill-teal-500">
-      <title>{`Train to ${
-        props.train.destination
-      }, currently ${props.train.currentLocation[0].toLowerCase()}${props.train.currentLocation.substring(
-        1
-      )} [${props.train.vehicleId}]`}</title>
+      <title>{label}</title>
     </path>
   );
 };

@@ -6,11 +6,12 @@ export interface Train {
   currentLocation: string;
   location?: Location;
   destination: string;
+  destinationId: string;
 }
 
 export type Location =
   | {
-      type: "at" | "leaving" | "left" | "approaching";
+      type: "at" | "leaving" | "left" | "approaching" | "before";
       station: string;
     }
   | {
@@ -45,4 +46,5 @@ export interface TflRouteApiResponse {
       name: string;
     }>;
   }>;
+  modeName: string;
 }

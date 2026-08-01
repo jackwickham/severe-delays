@@ -3,7 +3,7 @@ import {createResource, type Component, createMemo, For, type JSX, onCleanup, Sh
 import {TrainIndicator} from "./TrainIndicator";
 import type {Direction, Location, Station, Stations, TflRouteApiResponse, Train} from "./types";
 import {lineConfigs} from "../constants";
-import {parseLocation} from "./locationParser";
+import {constructLocation, parseLocation} from "./locationParser";
 import {Button} from "../components/Button";
 import feather from "feather-icons";
 import {getLineLayout} from "./lineLayouts";
@@ -12,10 +12,13 @@ interface TflArrivalApiResponse {
   vehicleId: string;
   currentLocation: string;
   towards: string;
+  destinationName: string;
   destinationNaptanId: string;
   direction: Direction;
   naptanId: string;
   timeToStation: number;
+  expectedArrival: string;
+  stationName: string;
 }
 
 const REFRESH_INTERVAL = 30000;
@@ -109,7 +112,7 @@ export const LiveLineView: Component = () => {
             id: stopPoint.stationId,
             name: stopPoint.name,
             friendlyName: stopPoint.name.replace(
-              /(?:\([^\)]+ Line\))?[ -]Underground(?: Station)?$/,
+              /(?:\([^\)]+ Line\))?[ -](?:Underground|Rail)(?: Station)?$/,
               ""
             ),
             predecessors: [],
@@ -144,120 +147,52 @@ export const LiveLineView: Component = () => {
         return ["", 0, [], {}];
       }
 
-      if (true) {
-        const lineLayout = getLineLayout(line, routeApiResponse.latest);
-        let path = lineLayout.edges
-          .map((edge) => {
-            const vertices = edge.map((vertex) => lineLayout.stationLocations[vertex]);
-            const components = [`M ${vertices[0].x} ${vertices[0].y}`];
-            for (let i = 1; i < vertices.length; i++) {
-              components.push(
-                `C ${vertices[i - 1].x},${vertices[i - 1].y + 20} ${vertices[i].x},${
-                  vertices[i].y - 20
-                } ${vertices[i].x},${vertices[i].y}`
-              );
-            }
-            return components.join(" ");
-          })
-          .join(" ");
-        const labelMarkers = Object.values(lineLayout.stationLocations)
-          .map((loc) => `M ${loc.x} ${loc.y} l ${loc.labelSide === "left" ? -10 : 10} 0`)
-          .join(" ");
-        const spurs = (lineLayout.spurs || [])
-          .map((spur) => {
-            const start = lineLayout.stationLocations[spur.stationName];
-            const vSign = spur.startDirection === "up" ? "-" : "";
-            const hSign = spur.endDirection === "left" ? "-" : "";
-            return `M ${start.x} ${start.y} c 0 ${vSign}7, ${hSign}7 ${vSign}12, ${hSign}12 ${vSign}12`;
-          })
-          .join(" ");
-        const labels = Object.values(lineLayout.stationLocations).map((location) => (
-          <text
-            x={location.x + (location.labelSide === "left" ? -55 : 55)}
-            y={location.y + 5}
-            text-anchor={location.labelSide === "left" ? "end" : "start"}
-          >
-            {stations()[location.stationId]?.friendlyName}
-          </text>
-        ));
-        return [
-          `${path} ${labelMarkers} ${spurs}`,
-          Math.max(...Object.values(lineLayout.stationLocations).map((layout) => layout.y)) + 20,
-          labels,
-          Object.fromEntries(
-            Object.values(lineLayout.stationLocations).map((location) => [
-              location.stationId,
-              location,
-            ])
-          ),
-        ];
-      }
-
-      const roots = Object.values(stations()).filter(
-        (station) => station.predecessors.length === 0
-      );
-      let node = roots[0];
-      const yOffset = 40;
-      let y = 10;
-      const x = 70;
-      const path = [`M ${x} ${y}`];
-      const labels: JSX.Element[] = [];
-      const stationLocations: {
-        [stationId: string]: {x: number; y: number; labelSide: "left" | "right"};
-      } = {};
-      let isFirstNode = true;
-      while (node) {
-        if (node.id in stationLocations) {
-          // There's a loop
-          break;
-        }
-        stationLocations[node.id] = {
-          x,
-          y,
-          labelSide: "right",
-        };
-        if (node.predecessors.length > 1) {
-          path.push("c 0 -7, -7 -12, -12 -12 m 12 12");
-        }
-        if (isFirstNode) {
-          path.push(`m 10 0 l -10 0`);
-        } else {
-          path.push(`l 10 0 m -10 0`);
-        }
-        labels.push(
-          <text x={x + 55} y={y + 5}>
-            {node.friendlyName} &nbsp;
-            <tspan class="fill-slate-500 text-sm">
-              {`${
-                node.minutesUntilNextTrains.inbound.length > 0
-                  ? `↑ ${node.minutesUntilNextTrains.inbound.map((t) => t.toFixed(0)).join(", ")}`
-                  : ""
-              }
-              ${
-                node.minutesUntilNextTrains.inbound.length > 0 &&
-                node.minutesUntilNextTrains.outbound.length > 0
-                  ? " / "
-                  : ""
-              }
-              ${
-                node.minutesUntilNextTrains.outbound.length > 0
-                  ? `↓ ${node.minutesUntilNextTrains.outbound.map((t) => t.toFixed(0)).join(", ")}`
-                  : ""
-              }`}
-            </tspan>
-          </text>
-        );
-        if (node.successors.length > 1) {
-          path.push("c 0 7, -7 12, -12 12 m 12 -12");
-        }
-        node = stations()[node.successors[0]];
-        if (node) {
-          path.push(`l 0 ${yOffset}`);
-          y += yOffset;
-        }
-        isFirstNode = false;
-      }
-      return [path.join(" "), y + 10, labels, stationLocations];
+      const lineLayout = getLineLayout(line, routeApiResponse.latest);
+      let path = lineLayout.edges
+        .map((edge) => {
+          const vertices = edge.map((vertex) => lineLayout.stationLocations[vertex]);
+          const components = [`M ${vertices[0].x} ${vertices[0].y}`];
+          for (let i = 1; i < vertices.length; i++) {
+            components.push(
+              `C ${vertices[i - 1].x},${vertices[i - 1].y + 20} ${vertices[i].x},${
+                vertices[i].y - 20
+              } ${vertices[i].x},${vertices[i].y}`
+            );
+          }
+          return components.join(" ");
+        })
+        .join(" ");
+      const labelMarkers = Object.values(lineLayout.stationLocations)
+        .map((loc) => `M ${loc.x} ${loc.y} l ${loc.labelSide === "left" ? -10 : 10} 0`)
+        .join(" ");
+      const spurs = (lineLayout.spurs || [])
+        .map((spur) => {
+          const start = lineLayout.stationLocations[spur.stationName];
+          const vSign = spur.startDirection === "up" ? "-" : "";
+          const hSign = spur.endDirection === "left" ? "-" : "";
+          return `M ${start.x} ${start.y} c 0 ${vSign}7, ${hSign}7 ${vSign}12, ${hSign}12 ${vSign}12`;
+        })
+        .join(" ");
+      const labels = Object.values(lineLayout.stationLocations).map((location) => (
+        <text
+          x={location.x + (location.labelSide === "left" ? -55 : 55)}
+          y={location.y + 5}
+          text-anchor={location.labelSide === "left" ? "end" : "start"}
+        >
+          {stations()[location.stationId]?.friendlyName}
+        </text>
+      ));
+      return [
+        `${path} ${labelMarkers} ${spurs}`,
+        Math.max(...Object.values(lineLayout.stationLocations).map((layout) => layout.y)) + 20,
+        labels,
+        Object.fromEntries(
+          Object.values(lineLayout.stationLocations).map((location) => [
+            location.stationId,
+            location,
+          ])
+        ),
+      ];
     }
   );
   const path = () => pathComputer()[0];
@@ -270,30 +205,62 @@ export const LiveLineView: Component = () => {
     if (!arrivalsApiResponse.latest! || !routeApiResponse.latest) {
       return [];
     }
-    for (let resp of arrivalsApiResponse.latest) {
-      let vehicle = resp.vehicleId != "000" ? resp.vehicleId : resp.currentLocation;
-      let existing = res[vehicle];
-      if (!existing || !existing.direction || !existing.location) {
-        const parsedLocation = parseLocation(resp.currentLocation, stations());
-        res[vehicle] = {
-          vehicleId: resp.vehicleId,
-          currentLocation: resp.currentLocation,
-          direction:
-            resp.direction ||
-            (parsedLocation &&
-              maybeInferDirection(
-                parsedLocation,
-                resp.destinationNaptanId,
-                stations(),
-                direction
-              )) ||
-            existing?.direction,
-          location: parsedLocation || existing?.location,
-          destination: resp.towards,
-        };
+    if (routeApiResponse.latest.modeName === "tube") {
+      for (let resp of arrivalsApiResponse.latest) {
+        let vehicle = resp.vehicleId != "000" ? resp.vehicleId : resp.currentLocation;
+        let existing = res[vehicle];
+        if (!existing || !existing.direction || !existing.location) {
+          const parsedLocation = parseLocation(resp.currentLocation, stations());
+          res[vehicle] = {
+            vehicleId: resp.vehicleId,
+            currentLocation: resp.currentLocation,
+            direction:
+              resp.direction ||
+              (parsedLocation &&
+                maybeInferDirection(
+                  parsedLocation,
+                  resp.destinationNaptanId,
+                  stations(),
+                  direction
+                )) ||
+              existing?.direction,
+            location: parsedLocation || existing?.location,
+            destination: resp.towards,
+            destinationId: resp.destinationNaptanId,
+          };
+        }
       }
+      return fillInMissingDirections(Object.values(res), stations());
+    } else {
+      let trains: {[vehicle: string]: TflArrivalApiResponse} = {};
+      for (let resp of arrivalsApiResponse.latest) {
+        if (resp.vehicleId in trains) {
+          if (trains[resp.vehicleId].expectedArrival > resp.expectedArrival) {
+            trains[resp.vehicleId] = resp;
+          }
+        } else {
+          trains[resp.vehicleId] = resp;
+        }
+      }
+      const res = Object.values(trains).map((entry) => ({
+        vehicleId: entry.vehicleId,
+        currentLocation: "",
+        direction: entry.direction || undefined,
+        location:
+          constructLocation(
+            Temporal.Now.instant().until(Temporal.Instant.from(entry.expectedArrival), {
+              largestUnit: "minutes",
+            }).minutes > 1
+              ? "before"
+              : "approaching",
+            entry.stationName,
+            stations()
+          ) || undefined,
+        destination: entry.towards || entry.destinationName,
+        destinationId: entry.destinationNaptanId,
+      }));
+      return fillInMissingDirections(res, stations());
     }
-    return fillInMissingDirections(Object.values(res), stations());
   });
 
   const lineColor = lineConfig?.color || {r: 0, g: 0, b: 0};
@@ -419,6 +386,16 @@ export const LiveLineView: Component = () => {
                       mapDirection={direction}
                     />
                   );
+                } else if (location.type === "before" && location.station in stationLocations()) {
+                  const station = stationLocations()[location.station];
+                  return (
+                    <TrainIndicator
+                      x={station.x + xOffset * (station.labelSide === "left" ? -1 : 1)}
+                      y={station.y - 20 * yOffsetMultiplier}
+                      train={train}
+                      mapDirection={direction}
+                    />
+                  );
                 } else if (
                   location.type === "between" &&
                   location.startStation in stationLocations() &&
@@ -440,6 +417,7 @@ export const LiveLineView: Component = () => {
                       mapDirection={direction}
                     />
                   );
+                } else if (location.type === "before" && location.station in stationLocations()) {
                 }
 
                 return null;
@@ -495,8 +473,8 @@ const fillInMissingDirections = (trains: Train[], stations: Stations): Train[] =
     if (train.direction) {
       return train;
     }
-    let predecessorsToTry = [stations[train.destination]];
-    let successorsToTry = [stations[train.destination]];
+    let predecessorsToTry = [stations[train.destinationId]];
+    let successorsToTry = [stations[train.destinationId]];
     for (let i = 0; i < 10; i++) {
       const newPredecessorsToTry: Station[] = [];
       for (let predecessor of predecessorsToTry) {

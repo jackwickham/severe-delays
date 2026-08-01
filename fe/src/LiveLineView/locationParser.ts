@@ -45,7 +45,7 @@ export const parseLocation = (currentLocation: string, stations: Stations): Loca
 };
 
 export const constructLocation = (
-  type: "at" | "leaving" | "left" | "approaching",
+  type: "at" | "leaving" | "left" | "approaching" | "before",
   stationName: string,
   stations: Stations
 ): Location | null => {
