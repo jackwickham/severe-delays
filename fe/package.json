@@ -24,6 +24,6 @@
   "dependencies": {
     "@solidjs/router": "^1.0.0",
     "feather-icons": "^4.29.1",
-    "solid-js": "^1.7.6"
+    "solid-js": "^2.0.3"
   }
 }
