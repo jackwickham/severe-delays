@@ -22,7 +22,7 @@
     "vite-plugin-solid": "^2.7.0"
   },
   "dependencies": {
-    "@solidjs/router": "^1.0.0",
+    "@solidjs/router": "^2.0.1",
     "feather-icons": "^4.29.1",
     "solid-js": "^1.7.6"
   }
